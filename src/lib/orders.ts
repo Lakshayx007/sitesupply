@@ -1,38 +1,6 @@
-/** Shared order types and plain-English reasons built from the score's pts_* columns. */
-
-export interface OrderRow {
-  order_id: string;
-  customer_id: string;
-  site_name: string;
-  vendor_id: string;
-  vendor_name: string;
-  material: string;
-  qty_ordered: number;
-  unit: string;
-  order_ts: string;
-  promised_ts: string;
-  dispatch_planned_ts: string;
-  dispatch_actual_ts: string | null;
-  check_ts: string;
-  delivered_ts: string | null;
-  delay_hours: number | null;
-  distance_km: number;
-  vendor_recent_otif: number | null;
-  risk_score: number;
-  pts_dispatch_late: number;
-  pts_vendor_recent_otif_below_80: number;
-  pts_distance_over_50km: number;
-  pts_ordered_under_24h: number;
-  pts_monsoon: number;
-  alert: number;
-  alert_lead_hours: number | null;
-  status: string;
-}
-
-export const ORDER_COLUMNS = `o.order_id, o.customer_id, o.site_name, o.vendor_id, v.vendor_name, o.material, o.qty_ordered, o.unit,
-  o.order_ts, o.promised_ts, o.dispatch_planned_ts, o.dispatch_actual_ts, o.check_ts, o.delivered_ts, o.delay_hours,
-  o.distance_km, o.vendor_recent_otif, o.risk_score, o.pts_dispatch_late, o.pts_vendor_recent_otif_below_80,
-  o.pts_distance_over_50km, o.pts_ordered_under_24h, o.pts_monsoon, o.alert, o.alert_lead_hours, o.status`;
+/** Plain-English reasons built from the score's pts_* columns, plus vendor helpers. */
+import type { LiveOrder } from "./live";
+import { shrink, wilson } from "./stats";
 
 export interface Reason {
   key: string;
@@ -44,12 +12,35 @@ export interface Reason {
 }
 
 /** "2026-09-26 04:54" → "04:54" */
-export const hhmm = (ts: string | null | undefined) => (ts ? ts.slice(11, 16) : "–");
+export const hhmm = (t: string | null | undefined) => (t ? t.slice(11, 16) : "–");
+/** "2026-09-26 04:54" → "26 Sep" */
+export const dayMonth = (t: string | null | undefined) => {
+  if (!t) return "–";
+  const m = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(t.slice(5, 7)) - 1];
+  return `${Number(t.slice(8, 10))} ${m}`;
+};
+export const unitLabel = (u: string) => (u === "m3" ? "m³" : u);
 
-/** Plain-English reasons, in the order the score adds them. Only reasons that scored points are returned. */
-export function reasonsFor(o: OrderRow): Reason[] {
+type ReasonInput = Pick<
+  LiveOrder,
+  | "pts_dispatch_late"
+  | "pts_vendor_recent_otif_below_80"
+  | "pts_distance_over_50km"
+  | "pts_ordered_under_24h"
+  | "pts_monsoon"
+  | "vendor_name"
+  | "vendor_recent_otif"
+  | "distance_km"
+  | "dispatch_planned_ts"
+>;
+
+/**
+ * Reasons in the order the score adds them. Only reasons that scored points are returned.
+ * Before the dispatch check (`full = false`) the dispatch reason is not known yet.
+ */
+export function reasonsFor(o: ReasonInput, full = true): Reason[] {
   const out: Reason[] = [];
-  if (o.pts_dispatch_late > 0)
+  if (full && o.pts_dispatch_late > 0)
     out.push({
       key: "dispatch",
       points: o.pts_dispatch_late,
@@ -73,7 +64,7 @@ export function reasonsFor(o: OrderRow): Reason[] {
       key: "distance",
       points: o.pts_distance_over_50km,
       label: "Long route",
-      sentence: `The site is ${Math.round(o.distance_km)} km from the plant, a long route.`,
+      sentence: `The site is ${Math.round(o.distance_km)} km from the plant.`,
     });
   if (o.pts_ordered_under_24h > 0)
     out.push({
@@ -92,5 +83,57 @@ export function reasonsFor(o: OrderRow): Reason[] {
   return out;
 }
 
-/** The order used in the home-page hero: a late ready-mix concrete order that scored every warning sign. */
+export interface VendorScore {
+  vendor_id: string;
+  vendor_name: string;
+  materials: string[];
+  n: number;
+  s: number;
+  otif: number;
+  lo: number;
+  hi: number;
+  adjusted: number;
+}
+
+/** Reliability per vendor over all delivered orders: raw OTIF, Wilson range, shrunk ("adjusted") OTIF with k = 20. */
+export function vendorScores(
+  orders: Pick<LiveOrder, "vendor_id" | "vendor_name" | "otif" | "cancelled">[],
+  vendorMaterials: Record<string, string[]>,
+  k = 20,
+): VendorScore[] {
+  const delivered = orders.filter((o) => o.cancelled === 0 && o.otif !== null);
+  const pbar = delivered.reduce((a, o) => a + (o.otif ?? 0), 0) / delivered.length;
+  const by = new Map<string, { name: string; n: number; s: number }>();
+  for (const o of delivered) {
+    const v = by.get(o.vendor_id) ?? { name: o.vendor_name, n: 0, s: 0 };
+    v.n++;
+    v.s += o.otif ?? 0;
+    by.set(o.vendor_id, v);
+  }
+  return [...by.entries()].map(([id, v]) => {
+    const [lo, hi] = wilson(v.s, v.n);
+    return {
+      vendor_id: id,
+      vendor_name: v.name,
+      materials: vendorMaterials[id] ?? [],
+      n: v.n,
+      s: v.s,
+      otif: v.s / v.n,
+      lo,
+      hi,
+      adjusted: shrink(v.s, v.n, pbar, k),
+    };
+  });
+}
+
+/** Backup vendor: the most reliable other vendor (by adjusted OTIF) that supplies the same material. */
+export function backupVendor(scores: VendorScore[], materialId: string, exclude: string): VendorScore | null {
+  return (
+    scores
+      .filter((v) => v.vendor_id !== exclude && v.materials.includes(materialId))
+      .sort((a, b) => b.adjusted - a.adjusted)[0] ?? null
+  );
+}
+
+/** The order used across the home page: a late ready-mix concrete order that scored every warning sign. */
 export const HERO_ORDER_ID = "O01162";
