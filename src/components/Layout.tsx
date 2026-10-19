@@ -4,6 +4,7 @@ import { useEffect, useState, type MouseEvent } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { SITE } from "../config";
 import { useDb } from "../db/DbProvider";
+import { InstallButton } from "./InstallButton";
 import { Logo } from "./Logo";
 
 /** Scrolls to a section on the home page, navigating there first if needed. */
@@ -55,6 +56,7 @@ function Header() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <InstallButton className="hidden sm:inline-flex" />
           <Link to="/console/ask" className="btn-ghost hidden min-h-[34px] px-3 sm:inline-flex">
             Ask the data
           </Link>
@@ -100,6 +102,7 @@ function Header() {
               <Link to="/console/ask" className="rounded-md px-2 py-3 text-base text-ink-2 hover:text-ink">
                 Ask the data
               </Link>
+              <InstallButton className="mt-2 w-fit" />
             </div>
           </motion.nav>
         )}

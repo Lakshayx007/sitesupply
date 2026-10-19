@@ -1,5 +1,6 @@
 import { BarChart3, Bell, ChevronLeft, FastForward, LayoutList, Pause, Play, SlidersHorizontal, Smartphone, Sparkles, Users } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { InstallButton } from "../components/InstallButton";
 import { Logo } from "../components/Logo";
 import { WINDOW, alertSent, fromMin, ts } from "../lib/live";
 import { useConsole } from "./ConsoleContext";
@@ -48,7 +49,7 @@ function ReplayBar() {
   const { day, time } = fmtClock(now);
   const pct = ((now - WINDOW.start) / (WINDOW.end - WINDOW.start)) * 100;
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-panel/80 px-4 py-2.5 backdrop-blur lg:px-6">
+    <section aria-label="Replay time" className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-panel/80 px-4 py-2.5 backdrop-blur lg:px-6">
       <div className="flex items-center gap-2">
         <button
           onClick={() => setPlaying(!playing)}
@@ -107,7 +108,7 @@ function ReplayBar() {
           Next alert
         </button>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -155,9 +156,10 @@ export function ConsoleLayout() {
       </aside>
 
       {/* Mobile top bar */}
-      <div className="flex h-12 items-center justify-between border-b border-line bg-panel px-4 lg:hidden">
+      <header className="flex h-12 items-center justify-between border-b border-line bg-panel px-4 lg:hidden">
         <Logo />
         <div className="flex items-center gap-4">
+          <InstallButton className="min-h-[30px] px-2.5 text-xs" />
           <NavLink to="/console/site" className="text-xs text-muted hover:text-ink">
             Phone view
           </NavLink>
@@ -165,7 +167,7 @@ export function ConsoleLayout() {
             Exit
           </NavLink>
         </div>
-      </div>
+      </header>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {!NO_CLOCK.includes(pathname) && <ReplayBar />}
