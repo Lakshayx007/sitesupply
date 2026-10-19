@@ -13,7 +13,7 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { RiskBadge, StatusChip, useToast } from "../components/ui";
 import { templateVendorMessage, vendorMessagePrompt } from "../lib/ask";
 import { ALERT_AT, alertSent, earlyScore, fromMin, liveScore, liveStatus, ts, type LiveOrder } from "../lib/live";
@@ -32,6 +32,7 @@ export function OrderDetail({ order: o, onClose, compact = false }: { order: Liv
   const reasons = reasonsFor(o, full);
   const backup = useMemo(() => backupVendor(vendors, o.material_id, o.vendor_id), [vendors, o]);
   const qty = `${o.qty_ordered} ${unitLabel(o.unit)}`;
+  const uid = useId();
 
   // The vendor's last 10 deliveries before now, newest last.
   const last10 = useMemo(
@@ -70,14 +71,16 @@ export function OrderDetail({ order: o, onClose, compact = false }: { order: Liv
         {alerted && status !== "delivered" && status !== "delivered-late" && status !== "delivered-short" && (
           <AlertCard order={o} reasons={reasons.map((r) => r.sentence)} reasonPts={reasons} backupName={backup?.vendor_name} backupOtif={backup?.adjusted} />
         )}
-        {watching && status === "watch" && (
+        {status === "watch" && (watching || full) && (
           <div className="rounded-xl border border-watch/30 bg-watch/[0.06] p-4">
             <p className="flex items-center gap-2 text-sm font-semibold text-watch">
               <Eye aria-hidden="true" className="h-4 w-4" />
               Keep an eye on this order
             </p>
             <p className="mt-1 text-sm text-ink-2">
-              Early warning signs add up to {earlyScore(o)} points. The full check runs at {fmtWhen(o.check_ts)}, an hour after the truck is due out.
+              {watching
+                ? `Early warning signs add up to ${earlyScore(o)} points. The full check runs at ${fmtWhen(o.check_ts)}, an hour after the truck is due out.`
+                : `The warning signs add up to ${score} points, but the truck left the plant on time, so no alert was sent. Most orders like this still arrive on time.`}
             </p>
           </div>
         )}
@@ -108,9 +111,9 @@ export function OrderDetail({ order: o, onClose, compact = false }: { order: Liv
 
         <ScoreBreakdown o={o} full={full} score={score} />
 
-        <section aria-labelledby={`vend-${o.order_id}`}>
+        <div>
           <div className="flex items-baseline justify-between">
-            <h3 id={`vend-${o.order_id}`} className="text-sm font-semibold">
+            <h3 id={`${uid}-vend`} className="text-sm font-semibold">
               {o.vendor_name}, last {last10.length} deliveries
             </h3>
             <span className="text-xs text-muted">
@@ -135,7 +138,7 @@ export function OrderDetail({ order: o, onClose, compact = false }: { order: Liv
             })}
             {last10.length === 0 && <li className="text-sm text-muted">No deliveries yet.</li>}
           </ol>
-        </section>
+        </div>
       </div>
     </div>
   );
@@ -157,6 +160,7 @@ function AlertCard({
 }) {
   const toast = useToast();
   const { ai } = useAi();
+  const uid = useId();
   const [draft, setDraft] = useState<string | null>(null);
   const [drafting, setDrafting] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -190,10 +194,10 @@ function AlertCard({
   };
 
   return (
-    <motion.section
+    <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      aria-labelledby={`alert-${o.order_id}`}
+      aria-labelledby={`${uid}-alert`}
       className="overflow-hidden rounded-xl border border-risk/35 bg-risk/[0.05]"
     >
       <div className="p-4">
@@ -201,7 +205,7 @@ function AlertCard({
           <TriangleAlert aria-hidden="true" className="h-4 w-4" />
           Alert sent at {hhmm(o.check_ts)}, {o.alert_lead_hours?.toFixed(1)} h before the promised time
         </p>
-        <h3 id={`alert-${o.order_id}`} className="mt-1.5 text-xl font-semibold tracking-[-0.02em] text-ink">
+        <h3 id={`${uid}-alert`} className="mt-1.5 text-xl font-semibold tracking-[-0.02em] text-ink">
           Likely late by several hours
         </h3>
         <ul className="mt-3 space-y-2">
@@ -244,11 +248,11 @@ function AlertCard({
         <AnimatePresence initial={false}>
           {draft !== null ? (
             <motion.div key="draft" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="overflow-hidden">
-              <label htmlFor={`draft-${o.order_id}`} className="text-xs text-muted">
+              <label htmlFor={`${uid}-draft`} className="text-xs text-muted">
                 Message to {o.vendor_name} {ai ? `(drafted by ${ai.label})` : "(template)"}
               </label>
               <textarea
-                id={`draft-${o.order_id}`}
+                id={`${uid}-draft`}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 rows={5}
@@ -281,7 +285,7 @@ function AlertCard({
           )}
         </AnimatePresence>
       </div>
-    </motion.section>
+    </motion.div>
   );
 }
 
@@ -369,6 +373,7 @@ function Timeline({ o, now }: { o: LiveOrder; now: number }) {
 /* ---------------- Score breakdown ---------------- */
 
 function ScoreBreakdown({ o, full, score }: { o: LiveOrder; full: boolean; score: number }) {
+  const uid = useId();
   const rules = [
     { pts: o.pts_dispatch_late, max: 40, text: "Truck not out an hour after planned dispatch", pending: !full },
     { pts: o.pts_vendor_recent_otif_below_80, max: 25, text: "Vendor under 80% on its last 10 orders" },
@@ -377,9 +382,9 @@ function ScoreBreakdown({ o, full, score }: { o: LiveOrder; full: boolean; score
     { pts: o.pts_monsoon, max: 10, text: "Monsoon season" },
   ];
   return (
-    <section aria-labelledby={`score-${o.order_id}`}>
+    <div>
       <div className="flex items-baseline justify-between">
-        <h3 id={`score-${o.order_id}`} className="text-sm font-semibold">
+        <h3 id={`${uid}-score`} className="text-sm font-semibold">
           Why the score is {score}
         </h3>
         <span className="text-xs text-muted">{full ? `Alert at ${ALERT_AT}` : "Early score, before the check"}</span>
@@ -405,6 +410,6 @@ function ScoreBreakdown({ o, full, score }: { o: LiveOrder; full: boolean; score
           );
         })}
       </ul>
-    </section>
+    </div>
   );
 }

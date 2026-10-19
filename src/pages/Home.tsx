@@ -11,6 +11,7 @@ import { OrderDetail } from "../console/OrderDetail";
 import { useQuery } from "../db/useQuery";
 import { STATUS_RANK, isDelivered, isPlaced, liveScore, liveStatus, ts } from "../lib/live";
 import { HERO_ORDER_ID, dayMonth, hhmm, unitLabel } from "../lib/orders";
+import { isAlert, useAlertRule } from "../lib/alertRule";
 import { confusion, median } from "../lib/stats";
 
 const HERO_FROM = ts("2026-09-26 04:20");
@@ -223,7 +224,7 @@ function RulesVisual() {
     <div ref={ref} className="frame p-6">
       <div className="flex items-baseline justify-between gap-4">
         <p className="text-sm font-medium text-ink">Delay-risk score</p>
-        <p className="text-xs text-muted">An alert goes out at 50</p>
+        <p className="text-xs text-muted">Alert at 50, once the truck is late</p>
       </div>
       <div className="relative mt-4 flex h-10 overflow-hidden rounded-lg bg-raised">
         {rules.map((r, i) => {
@@ -334,19 +335,23 @@ function VendorVisual() {
 /* ---------------- Results ---------------- */
 
 function Results() {
-  const scored = useQuery<{ s: number; t: number }>("SELECT risk_score AS s, on_time AS t FROM orders WHERE cancelled = 0").rows;
-  const lead = useQuery<{ h: number }>("SELECT alert_lead_hours AS h FROM orders WHERE cancelled = 0 AND alert = 1").rows;
+  const rule = useAlertRule();
+  const scored = useQuery<{ s: number; t: number; d: number; h: number | null }>(
+    "SELECT risk_score AS s, on_time AS t, pts_dispatch_late AS d, alert_lead_hours AS h FROM orders WHERE cancelled = 0",
+  ).rows;
   const gk = useQuery<{ share: number }>("SELECT AVG(vendor_id IN ('VG','VK')) AS share FROM orders WHERE cancelled = 0 AND on_time = 0").rows[0];
   const n = scored.length;
-  const recall = n ? confusion(scored.map((r) => r.s), scored.map((r) => 1 - r.t), 50).recall : 0;
+  const alerts = scored.filter((r) => isAlert({ risk_score: r.s, pts_dispatch_late: r.d }, rule));
+  const k = n ? confusion(scored.map((r) => (isAlert({ risk_score: r.s, pts_dispatch_late: r.d }, rule) ? r.s : 0)), scored.map((r) => 1 - r.t), 50) : null;
   const stats = [
-    { v: `${Math.round(recall * 100)}%`, k: "of late deliveries flagged before they were late" },
-    { v: `${lead.length ? median(lead.map((r) => r.h)).toFixed(1) : "–"} h`, k: "typical warning before the promised time" },
+    { v: k ? `${Math.round(k.recall * 100)}%` : "–", k: "of late deliveries flagged before they were late" },
+    { v: k ? `${Math.round(k.precision * 100)}%` : "–", k: "of alerts turned out to be right" },
+    { v: alerts.length ? `${median(alerts.map((r) => r.h ?? NaN)).toFixed(1)} h` : "–", k: "typical warning before the promised time" },
     { v: `${gk ? Math.round(gk.share * 100) : "–"}%`, k: "of late deliveries came from just two low-price vendors" },
   ];
   return (
     <div>
-      <dl className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
+      <dl className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
           <div key={s.k} className="flex flex-col-reverse bg-canvas p-7">
             <dt className="mt-3 max-w-[16rem] text-[15px] leading-snug text-ink-2">{s.k}</dt>
@@ -410,7 +415,7 @@ export default function Home() {
         <Feature
           flip
           title="Alerts that say why, and what to do."
-          body="When an order crosses 50 points, the site engineer gets the reasons in plain words and three next steps."
+          body="When an order scores 50 or more and its truck is late leaving the plant, the site engineer gets the reasons in plain words and three next steps."
           points={[
             { icon: Bell, text: "Call the vendor, switch to a backup vendor, or move the crew to other work." },
             { icon: MessageSquareText, text: "AI drafts the message to the vendor's dispatch desk, ready to send." },
@@ -436,7 +441,7 @@ export default function Home() {
         <ol className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-3">
           {[
             { t: "Watch every order", d: "From the moment it is placed: who supplies it, how far it travels and when the truck should leave the plant." },
-            { t: "Score the risk", d: "Points for each warning sign. An early watch at 25, a full alert at 50, checked an hour after planned dispatch." },
+            { t: "Score the risk", d: "Points for each warning sign. A watch from 25 points, and an alert at 50 once the truck is late leaving, checked an hour after planned dispatch." },
             { t: "Alert with reasons and actions", d: "The reasons in plain words, a backup vendor, and a message to the vendor ready to send." },
           ].map((s, i) => (
             <li key={s.t} className="bg-canvas p-7">

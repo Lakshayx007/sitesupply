@@ -24,7 +24,7 @@ const SECTIONS = [
   { id: "overview", label: "Overview" },
   { id: "users", label: "Problem and users" },
   { id: "score", label: "How the score works" },
-  { id: "insights", label: "Eight insights" },
+  { id: "insights", label: "Nine insights" },
   { id: "methods", label: "Which test, and why" },
   { id: "documents", label: "Product documents" },
   { id: "data", label: "Data and method" },
@@ -46,7 +46,7 @@ FROM orders WHERE cancelled = 0`,
   weekly: `SELECT CAST((julianday(substr(promised_ts,1,10)) - julianday('2026-04-06')) / 7 AS INT) + 1 AS week,
        COUNT(*) AS n, ROUND(AVG(otif), 3) AS otif
 FROM orders WHERE cancelled = 0 GROUP BY week ORDER BY week`,
-  scores: `SELECT risk_score, on_time,
+  scores: `SELECT risk_score, on_time, pts_dispatch_late, dispatch_late,
        pts_vendor_recent_otif_below_80 + pts_distance_over_50km + pts_ordered_under_24h + pts_monsoon AS early_score,
        (julianday(promised_ts) - julianday(order_ts)) * 24 AS hours_order_to_promise, alert_lead_hours
 FROM orders WHERE cancelled = 0`,
@@ -90,7 +90,7 @@ function Insight({
   return (
     <article className="grid gap-6 border-t border-line pt-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-10">
       <div>
-        <p className="num text-xs text-muted">Insight {n} of 8</p>
+        <p className="num text-xs text-muted">Insight {n} of 9</p>
         <h3 className="mt-2 text-2xl font-semibold leading-snug tracking-[-0.02em]">{title}</h3>
         <dl className="mt-5 space-y-4 text-[15px] leading-relaxed">
           <div>
@@ -144,7 +144,7 @@ export default function CaseStudy() {
   const repeat = useQuery<{ otif: number; deliveries: number; repeat_30d: number }>(SQL.repeat).rows;
   const gk = useQuery<{ share_of_orders: number; share_of_late: number; otif_gk: number; otif_others: number }>(SQL.gk).rows[0];
   const weekly = useQuery<{ week: number; n: number; otif: number }>(SQL.weekly).rows;
-  const scores = useQuery<{ risk_score: number; on_time: number; early_score: number; hours_order_to_promise: number; alert_lead_hours: number | null }>(SQL.scores).rows;
+  const scores = useQuery<{ risk_score: number; on_time: number; pts_dispatch_late: number; dispatch_late: number; early_score: number; hours_order_to_promise: number; alert_lead_hours: number | null }>(SQL.scores).rows;
   const delayRows = useQuery<{ delay_hours: number }>(SQL.delays).rows;
   const top = useQuery<{ enquiries: number; quoted: number; ordered: number }>(SQL.funnelTop).rows[0];
   const bottom = useQuery<{ dispatched: number; delivered_otif: number; reordered_30d: number }>(SQL.funnelBottom).rows[0];
@@ -179,6 +179,17 @@ export default function CaseStudy() {
       dispLead: median(scores.filter((r) => r.risk_score >= 50).map((r) => r.alert_lead_hours ?? NaN)),
     };
   }, [scores, late]);
+  const rules = useMemo(() => {
+    if (!scores.length) return null;
+    const scoreOnly = confusion(scores.map((r) => r.risk_score), late, 50);
+    const withTruck = confusion(scores.map((r) => (r.pts_dispatch_late > 0 ? r.risk_score : 0)), late, 50);
+    const fpNoDispatch = scores.filter((r) => r.risk_score >= 50 && r.on_time === 1 && r.pts_dispatch_late === 0).length;
+    const lateIf = (v: number) => {
+      const g = scores.filter((r) => r.dispatch_late === v);
+      return g.filter((r) => r.on_time === 0).length / g.length;
+    };
+    return { scoreOnly, withTruck, fpNoDispatch, lateIfOut: lateIf(1), lateIfOnTime: lateIf(0) };
+  }, [scores, late]);
   const delays = useMemo(() => delayRows.map((r) => r.delay_hours), [delayRows]);
   const d = useMemo(() => ({ med: median(delays), avg: mean(delays), p90: percentile(delays, 90) }), [delays]);
   const bins = useMemo(() => {
@@ -211,7 +222,7 @@ export default function CaseStudy() {
           <p className="eyebrow">Case study</p>
           <h1 className="display mt-4 max-w-4xl text-[44px] leading-[1.04] sm:text-6xl">How SiteSupply was designed, and what the data said.</h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-2">
-            A product-management project by Lakshay Malik: the problem, the users, the rules behind the score, eight findings and the decisions
+            A product-management project by Lakshay Malik: the problem, the users, the rules behind the score, nine findings and the decisions
             they led to, and the documents behind the build.
           </p>
           <div id="overview" className="mt-10 flex max-w-3xl scroll-mt-24 gap-3 rounded-xl border border-watch/30 bg-watch/[0.06] p-5">
@@ -253,7 +264,7 @@ export default function CaseStudy() {
             <H2 id="users" sub="Site teams learn a delivery is late only when the truck doesn't come. The signs were usually visible earlier; nobody put them together in time.">
               Problem and users
             </H2>
-            <div className="scroll-thin overflow-x-auto rounded-xl border border-line">
+            <div tabIndex={0} role="region" aria-label="Users and what hurts today" className="scroll-thin overflow-x-auto rounded-xl border border-line">
               <table className="w-full min-w-[640px] text-left text-sm">
                 <thead className="bg-raised/60 text-xs text-muted">
                   <tr>
@@ -311,7 +322,7 @@ export default function CaseStudy() {
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-ink-2">
                   <span className="font-medium text-ink">Delay alert</span> at the dispatch check, an hour after the truck was due out. Much more
-                  accurate, but hours of warning. At 50 points or more an alert goes out with the reasons.
+                  accurate, but hours of warning. At 50 points or more, with the truck late leaving, an alert goes out with the reasons.
                 </p>
                 <Link to="/console/tuning" className="link mt-4 inline-block text-sm">
                   Try the threshold yourself
@@ -323,7 +334,7 @@ export default function CaseStudy() {
           {/* Insights */}
           <section id="insights" aria-labelledby="insights-title" className="scroll-mt-24">
             <H2 id="insights" sub="Each one follows the same pattern: what the data shows, what it means, and the decision it leads to. Every chart runs its query in your browser.">
-              Eight insights
+              Nine insights
             </H2>
             <div className="space-y-14">
               <Insight
@@ -472,6 +483,25 @@ export default function CaseStudy() {
                   )
                 }
               />
+              <Insight
+                n={9}
+                title="Most false alarms came from trucks that had already left on time"
+                see={rules ? <>At threshold 50, {rules.scoreOnly.fp} of {rules.scoreOnly.tp + rules.scoreOnly.fp} alerts were on time, and {rules.fpNoDispatch} of those had no dispatch problem at all: the vendor's record, distance and season added up to 50 on their own. When the truck left late, {pct(rules.lateIfOut, 0)} of deliveries were late; when it left on time, only {pct(rules.lateIfOnTime, 0)} were.</> : "–"}
+                means="Signs known at order time are weak on their own. A truck that hasn't left is the strong signal."
+                decision={rules ? <>Send the loud alert only when the score is 50+ and the truck is late leaving; show other high scores as Watch. That cuts false alarms from {rules.scoreOnly.fp} to {rules.withTruck.fp}, and alerts are right {pct(rules.withTruck.precision, 0)} of the time instead of {pct(rules.scoreOnly.precision, 0)}, while still catching {pct(rules.withTruck.recall, 0)} of late orders. This rule was found on the same simulated data, so it is the first thing to test on real orders.</> : "–"}
+                chart={
+                  O && rules && (
+                    <ChartCard
+                      title="Alerts a week under each rule"
+                      option={O.barsH(["Score of 50+ alone", "Score of 50+ and truck late"], [Math.round(((rules.scoreOnly.tp + rules.scoreOnly.fp) / 25) * 10) / 10, Math.round(((rules.withTruck.tp + rules.withTruck.fp) / 25) * 10) / 10], { extra: [`${pct(rules.scoreOnly.precision, 0)} right, ${pct(rules.scoreOnly.recall, 0)} caught`, `${pct(rules.withTruck.precision, 0)} right, ${pct(rules.withTruck.recall, 0)} caught`] })}
+                      height={200}
+                      queries={[{ sql: SQL.scores }]}
+                      table={{ head: ["Rule", "Alerts", "False alarms", "Right", "Caught"], rows: [["Score alone", rules.scoreOnly.tp + rules.scoreOnly.fp, rules.scoreOnly.fp, pct(rules.scoreOnly.precision), pct(rules.scoreOnly.recall)], ["Score and late truck", rules.withTruck.tp + rules.withTruck.fp, rules.withTruck.fp, pct(rules.withTruck.precision), pct(rules.withTruck.recall)]] }}
+                      footer={<Link to="/console/tuning" className="link">Switch rules in Alert tuning</Link>}
+                    />
+                  )
+                }
+              />
             </div>
           </section>
 
@@ -525,7 +555,7 @@ export default function CaseStudy() {
               ))}
             </div>
             <h3 className="mt-10 text-lg font-semibold">What was planted on purpose</h3>
-            <div className="scroll-thin mt-4 overflow-x-auto rounded-xl border border-line">
+            <div tabIndex={0} role="region" aria-label="Planted patterns" className="scroll-thin mt-4 overflow-x-auto rounded-xl border border-line">
               <table className="w-full min-w-[600px] text-left text-sm">
                 <thead className="bg-raised/60 text-xs text-muted">
                   <tr>
@@ -563,7 +593,7 @@ export default function CaseStudy() {
               </div>
             </div>
             <h3 className="mt-10 text-lg font-semibold">Reproduce it</h3>
-            <pre className="scroll-thin mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 font-mono text-[13px] text-ink-2">
+            <pre tabIndex={0} className="scroll-thin mt-3 overflow-x-auto rounded-xl border border-line bg-panel p-4 font-mono text-[13px] text-ink-2">
               python scripts/make_sample_data.py && python scripts/analysis.py && python scripts/build_sqlite.py
             </pre>
           </section>

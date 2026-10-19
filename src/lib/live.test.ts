@@ -21,13 +21,14 @@ describe("liveStatus follows the CLAUDE.md status logic", () => {
     const o = byId("O01162");
     expect(earlyScore(o)).toBe(60);
     expect(liveStatus(o, ts(o.check_ts) - 1)).toBe("watch");
-    expect(liveStatus(o, ts(o.check_ts))).toBe("at-risk");
+    expect(liveStatus(o, ts(o.check_ts), "score")).toBe("at-risk");
+    expect(liveStatus(o, ts(o.check_ts), "dispatch")).toBe("at-risk"); // its truck was late, so it alerts under both rules
     expect(liveStatus(o, ts(o.promised_ts))).toBe("delayed");
     expect(liveStatus(o, ts(o.delivered_ts!))).toBe("delivered-late");
     expect(liveScore(o, ts(o.check_ts) - 1)).toEqual({ score: 60, full: false });
     expect(liveScore(o, ts(o.check_ts))).toEqual({ score: 100, full: true });
     expect(alertSent(o, ts(o.check_ts) - 1)).toBe(false);
-    expect(alertSent(o, ts(o.check_ts))).toBe(true);
+    expect(alertSent(o, ts(o.check_ts), "score")).toBe(true);
   });
 
   it("at the end of the window every delivered order matches its recorded status", () => {
@@ -37,10 +38,24 @@ describe("liveStatus follows the CLAUDE.md status logic", () => {
     for (const [id, s] of status) expect(liveStatus(byId(String(id)), end)).toBe(map[String(s)]);
   });
 
-  it("an alert is sent exactly for orders with alert = 1, and their full score is at least 50", () => {
+  it("score rule: an alert is sent exactly for orders with alert = 1 (423)", () => {
     const end = ts("2026-09-29 00:00");
-    const sent = orders.filter((o) => o.cancelled === 0 && alertSent(o, end));
+    const sent = orders.filter((o) => o.cancelled === 0 && alertSent(o, end, "score"));
     expect(sent.length).toBe(423);
-    expect(sent.every((o) => o.risk_score >= 50)).toBe(true);
+    expect(sent.every((o) => o.alert === 1)).toBe(true);
+  });
+
+  it("dispatch rule: 290 alerts, 75% right, 77% of late orders caught; other 50+ orders show as Watch", () => {
+    const end = ts("2026-09-29 00:00");
+    const live = orders.filter((o) => o.cancelled === 0);
+    const sent = live.filter((o) => alertSent(o, end, "dispatch"));
+    const lateN = live.filter((o) => o.on_time === 0).length;
+    const tp = sent.filter((o) => o.on_time === 0).length;
+    expect(sent.length).toBe(290);
+    expect(Math.abs(tp / sent.length - 0.748)).toBeLessThanOrEqual(0.002);
+    expect(Math.abs(tp / lateN - 0.767)).toBeLessThanOrEqual(0.002);
+    const o = live.find((x) => x.risk_score >= 50 && x.pts_dispatch_late === 0)!;
+    const mid = ts(o.check_ts) + 1;
+    if (mid < ts(o.promised_ts) && (!o.delivered_ts || mid < ts(o.delivered_ts))) expect(liveStatus(o, mid, "dispatch")).toBe("watch");
   });
 });

@@ -28,7 +28,7 @@ The signs were usually visible earlier: the truck hadn't left on time, the vendo
 
 ## 4. Solution overview
 1. **Risk score.** Each order gets points for warning signs: truck not out an hour after planned dispatch (+40), vendor on time and in full on under 80% of its last 10 orders (+25), route over 50 km (+15), ordered under 24 hours before need (+10), monsoon season (+10).
-2. **Two warnings.** An early "watch" label when the order is placed (score of 25+ without the dispatch sign), and a delay alert at the dispatch check (score of 50+).
+2. **Two warnings.** An early "watch" label when the order is placed (score of 25+ without the dispatch sign), and a delay alert at the dispatch check: score of 50+ **and** the truck late leaving the plant. Orders that reach 50 without a late truck stay on Watch. (On the sample data this rule cut false alarms from 188 to 73, with 75% of alerts right and 77% of late orders caught, against 56% and 83% for "score of 50+" alone. It was found on the same data, so it is the first thing to validate on real orders.)
 3. **Alert.** Reasons as sentences, plus three actions: call the vendor, switch to the most reliable backup vendor for the same material, reschedule the work.
 4. **Vendor scorecard.** Raw and adjusted OTIF with a 95% range.
 5. **Operations dashboard.** Weekly OTIF on a control chart, funnel, materials, monsoon vs dry season.
@@ -60,7 +60,7 @@ See [user_stories.md](user_stories.md) for all eight stories with Given / When /
 **Guardrails** (must not get worse): vendor acceptance rate, cost per order, alerts per user per week (alert fatigue).
 
 ## 7. Risks
-- **Alert fatigue.** About 17 alerts a week at threshold 50, and 44% of them are false alarms. Mitigation: show reasons, track % of alerts acted on, raise the threshold if it falls.
+- **Alert fatigue.** With "score of 50+" alone there are about 17 alerts a week and 44% are false alarms; requiring a late truck brings that to about 12 a week and 25%. Mitigation: that rule, reasons on every alert, tracking % of alerts acted on, and raising the threshold if it falls.
 - **Vendor push-back.** Vendors may object to public scores. Mitigation: share each vendor's own scorecard with them first, show the confidence range, adjust small samples toward the average.
 - **Bad timestamps.** The dispatch sign depends on an accurate "truck left" time. Mitigation: one-tap dispatch confirmation for vendors, GPS in v2, flag orders with missing timestamps instead of guessing.
 - **Delays the dispatch check can't see.** About 20% of late orders leave on time and are delayed on the road. Mitigation: live GPS tracking in v2.

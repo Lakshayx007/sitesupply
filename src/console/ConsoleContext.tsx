@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLive } from "../db/useLive";
+import { isAlert, useAlertRule, type AlertRule } from "../lib/alertRule";
 import { DEFAULT_NOW, WINDOW, ts, type LiveOrder } from "../lib/live";
 import type { VendorScore } from "../lib/orders";
 
@@ -15,6 +16,8 @@ interface ConsoleState {
   orders: LiveOrder[];
   vendors: VendorScore[];
   byId: Map<string, LiveOrder>;
+  /** The alert rule in force (the provider re-renders when it changes). */
+  rule: AlertRule;
   /** Jumps to the next alert after `now` and returns its order id. */
   nextAlert: () => string | null;
 }
@@ -29,6 +32,7 @@ export function useConsole(): ConsoleState {
 
 export function ConsoleProvider({ children, initialNow = DEFAULT_NOW }: { children: ReactNode; initialNow?: number }) {
   const live = useLive();
+  const rule = useAlertRule();
   const [now, setNowRaw] = useState(initialNow);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(120);
@@ -60,10 +64,10 @@ export function ConsoleProvider({ children, initialNow = DEFAULT_NOW }: { childr
   const alertTimes = useMemo(
     () =>
       live.orders
-        .filter((o) => o.alert === 1 && o.cancelled === 0)
+        .filter((o) => o.cancelled === 0 && isAlert(o, rule))
         .map((o) => ({ t: ts(o.check_ts), id: o.order_id }))
         .sort((a, b) => a.t - b.t),
-    [live.orders],
+    [live.orders, rule],
   );
 
   const nextAlert = useCallback(() => {
@@ -85,6 +89,7 @@ export function ConsoleProvider({ children, initialNow = DEFAULT_NOW }: { childr
     orders: live.orders,
     vendors: live.vendors,
     byId: live.byId,
+    rule,
     nextAlert,
   };
 

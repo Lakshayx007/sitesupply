@@ -3,28 +3,33 @@ import { useMemo, useState } from "react";
 import { ChartCard } from "../components/charts/ChartCard";
 import { base, tok } from "../components/charts/echarts";
 import { useQuery } from "../db/useQuery";
+import { setAlertRule, useAlertRule, type AlertRule } from "../lib/alertRule";
 import { confusion, median, sampleSizeTwoProportions } from "../lib/stats";
 import { summary } from "../lib/summary";
 
 const CURRENT = 50;
 
 const Q = {
-  scores: `SELECT risk_score, on_time, dispatch_late,
+  scores: `SELECT risk_score, on_time, dispatch_late, pts_dispatch_late,
        pts_vendor_recent_otif_below_80 + pts_distance_over_50km + pts_ordered_under_24h + pts_monsoon AS early_score,
        (julianday(promised_ts) - julianday(order_ts)) * 24 AS hours_order_to_promise,
        alert_lead_hours
 FROM orders WHERE cancelled = 0`,
-  atThreshold: (t: number) => `SELECT SUM(risk_score >= ${t}) AS alerts,
-       ROUND(1.0 * SUM(risk_score >= ${t} AND on_time = 0) / SUM(risk_score >= ${t}), 3) AS precision,
-       ROUND(1.0 * SUM(risk_score >= ${t} AND on_time = 0) / SUM(on_time = 0), 3) AS recall,
-       ROUND(SUM(risk_score >= ${t}) / 25.0, 1) AS alerts_per_week
-FROM orders WHERE cancelled = 0`,
+  atThreshold: (t: number, rule: AlertRule) => {
+    const a = rule === "dispatch" ? `(risk_score >= ${t} AND pts_dispatch_late > 0)` : `(risk_score >= ${t})`;
+    return `SELECT SUM(${a}) AS alerts,
+       ROUND(1.0 * SUM(${a} AND on_time = 0) / SUM(${a}), 3) AS precision,
+       ROUND(1.0 * SUM(${a} AND on_time = 0) / SUM(on_time = 0), 3) AS recall,
+       ROUND(SUM(${a}) / 25.0, 1) AS alerts_per_week
+FROM orders WHERE cancelled = 0`;
+  },
 };
 
 interface Row {
   risk_score: number;
   on_time: number;
   dispatch_late: number;
+  pts_dispatch_late: number;
   early_score: number;
   hours_order_to_promise: number;
   alert_lead_hours: number | null;
@@ -49,8 +54,18 @@ function Panel({ title, sub, children, className = "" }: { title: string; sub?: 
 export function Tuning() {
   const rows = useQuery<Row>(Q.scores).rows;
   const [t, setT] = useState(CURRENT);
+  const rule = useAlertRule();
   const late = useMemo(() => rows.map((r) => 1 - r.on_time), [rows]);
-  const scores = useMemo(() => rows.map((r) => r.risk_score), [rows]);
+  // Under the dispatch rule an order can only alert if its truck was late leaving, so its effective score is 0 otherwise.
+  const scoresFor = (r: AlertRule) => rows.map((x) => (r === "score" || x.pts_dispatch_late > 0 ? x.risk_score : 0));
+  const scores = useMemo(() => scoresFor(rule), [rows, rule]); // eslint-disable-line react-hooks/exhaustive-deps
+  const compare = useMemo(
+    () =>
+      rows.length
+        ? (["score", "dispatch"] as AlertRule[]).map((r) => ({ r, k: confusion(scoresFor(r), late, CURRENT) }))
+        : [],
+    [rows, late], // eslint-disable-line react-hooks/exhaustive-deps
+  );
   const c = useMemo(() => (rows.length ? confusion(scores, late, t) : null), [rows, scores, late, t]);
   const cNow = useMemo(() => (rows.length ? confusion(scores, late, CURRENT) : null), [rows, scores, late]);
 
@@ -86,7 +101,7 @@ export function Tuning() {
             silent: true,
             symbol: "none",
             data: [
-              { xAxis: String(CURRENT), lineStyle: { color: B.series2, type: "dashed", width: 1 }, label: { formatter: "Today", color: B.muted, fontSize: 11 } },
+              { xAxis: String(CURRENT), lineStyle: { color: B.series2, type: "dashed", width: 1 }, label: { formatter: "Default", color: B.muted, fontSize: 11 } },
               ...(t !== CURRENT && t % 5 === 0 ? [{ xAxis: String(t), lineStyle: { color: tok("primary-ink"), width: 1.5 }, label: { formatter: "Trying", color: tok("primary-ink"), fontSize: 11 } }] : []),
             ],
           },
@@ -102,7 +117,7 @@ export function Tuning() {
     const early = confusion(rows.map((r) => r.early_score), late, 25);
     const earlyLead = median(rows.filter((r) => r.early_score >= 25).map((r) => r.hours_order_to_promise));
     const disp = confusion(scores, late, 50);
-    const dispLead = median(rows.filter((r) => r.risk_score >= 50).map((r) => r.alert_lead_hours ?? NaN));
+    const dispLead = median(rows.filter((_, i) => scores[i] >= 50).map((r) => r.alert_lead_hours ?? NaN));
     const lateRows = rows.filter((r) => r.on_time === 0);
     const onRoad = lateRows.filter((r) => r.dispatch_late === 0).length / lateRows.length;
     const baseLate = lateRows.length / rows.length;
@@ -180,7 +195,56 @@ export function Tuning() {
         <section aria-labelledby="thr" className="panel overflow-hidden">
           <div className="grid gap-0 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div className="border-b border-line p-5 lg:border-b-0 lg:border-r">
-              <h2 id="thr" className="text-[15px] font-semibold">Alert threshold</h2>
+              <h2 id="thr" className="text-[15px] font-semibold">Alert rule</h2>
+              <fieldset className="mt-3">
+                <legend className="sr-only">When to send an alert</legend>
+                <div className="grid gap-2">
+                  {(
+                    [
+                      { v: "dispatch", label: "Score of 50+ and the truck is late leaving", note: "Recommended. Other high scores show as Watch." },
+                      { v: "score", label: "Score of 50+ alone", note: "The original rule. Catches more, with more false alarms." },
+                    ] as { v: AlertRule; label: string; note: string }[]
+                  ).map((o) => (
+                    <label
+                      key={o.v}
+                      className={`flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors ${
+                        rule === o.v ? "border-primary-ink/60 bg-primary/10" : "border-line hover:border-line-strong"
+                      }`}
+                    >
+                      <input type="radio" name="rule" value={o.v} checked={rule === o.v} onChange={() => setAlertRule(o.v)} className="mt-1 accent-[rgb(var(--primary))]" />
+                      <span>
+                        <span className="block text-sm font-medium text-ink">{o.label}</span>
+                        <span className="block text-xs text-muted">{o.note}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              {compare.length === 2 && (
+                <table className="mt-4 w-full text-left text-sm">
+                  <caption className="sr-only">The two rules at a score of {CURRENT}</caption>
+                  <thead className="text-xs text-muted">
+                    <tr>
+                      <th scope="col" className="pb-1.5 font-medium">At {CURRENT}</th>
+                      <th scope="col" className="pb-1.5 text-right font-medium">A week</th>
+                      <th scope="col" className="pb-1.5 text-right font-medium">Right</th>
+                      <th scope="col" className="pb-1.5 text-right font-medium">Caught</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {compare.map(({ r, k }) => (
+                      <tr key={r} className={`border-t border-line ${rule === r ? "text-ink" : "text-muted"}`}>
+                        <th scope="row" className="py-1.5 text-left font-normal">{r === "dispatch" ? "Score and late truck" : "Score alone"}</th>
+                        <td className="py-1.5 text-right tabular-nums">{((k.tp + k.fp) / WEEKS).toFixed(1)}</td>
+                        <td className="py-1.5 text-right tabular-nums">{pct(k.precision)}</td>
+                        <td className="py-1.5 text-right tabular-nums">{pct(k.recall)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              <p className="mt-2 text-xs text-muted">This setting also changes the live board and alerts.</p>
+              <h3 className="mt-7 border-t border-line pt-5 text-[15px] font-semibold">Alert threshold</h3>
               <div className="mt-5 flex items-end justify-between">
                 <label htmlFor="threshold" className="text-sm text-ink-2">
                   Send an alert at a score of
@@ -209,28 +273,28 @@ export function Tuning() {
               </p>
               {c && cNow && t !== CURRENT && (
                 <p className="mt-2 text-xs text-muted">
-                  Compared with today's setting of {CURRENT}: {t > CURRENT ? "fewer" : "more"} alerts, {pct(Math.abs(c.recall - cNow.recall))}{" "}
+                  Compared with the default of {CURRENT}: {t > CURRENT ? "fewer" : "more"} alerts, {pct(Math.abs(c.recall - cNow.recall))}{" "}
                   {c.recall < cNow.recall ? "fewer" : "more"} late orders caught.
                 </p>
               )}
               {c && (
-                <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line text-sm" role="table" aria-label="Alerts against what happened">
+                <ul className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line text-sm" aria-label="Alerts against what happened">
                   {[
                     { k: "Alert, and it was late", v: c.tp, note: "Caught", icon: CircleCheck, tone: "text-good" },
                     { k: "Alert, but on time", v: c.fp, note: "False alarm", icon: Eye, tone: "text-watch" },
                     { k: "No alert, but late", v: c.fn, note: "Missed", icon: Clock, tone: "text-late" },
                     { k: "No alert, on time", v: c.tn, note: "Quiet", icon: CircleCheck, tone: "text-muted" },
                   ].map(({ k, v, note, icon: Icon, tone }) => (
-                    <div key={k} role="cell" className="bg-panel p-3.5">
+                    <li key={k} className="bg-panel p-3.5">
                       <p className={`flex items-center gap-1.5 text-xs font-medium ${tone}`}>
                         <Icon aria-hidden="true" className="h-3.5 w-3.5" />
                         {note}
                       </p>
                       <p className="mt-1 text-2xl font-semibold tabular-nums">{v}</p>
                       <p className="text-xs text-muted">{k}</p>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
             </div>
             <div className="min-w-0 p-2">
@@ -240,7 +304,7 @@ export function Tuning() {
                 subtitle="Share of late orders caught, and share of alerts that were right, at each threshold."
                 option={sweepOpt}
                 height={360}
-                queries={[{ label: `At threshold ${t}`, sql: Q.atThreshold(t) }]}
+                queries={[{ label: `At threshold ${t}`, sql: Q.atThreshold(t, rule) }]}
                 table={{ head: ["Threshold", "Alerts a week", "Right", "Caught"], rows: sweep.map((s) => [s.th, s.perWeek.toFixed(1), pct(s.precision, 1), pct(s.recall, 1)]) }}
               />
             </div>
@@ -255,7 +319,7 @@ export function Tuning() {
                 <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line">
                   {[
                     { name: "Early watch", when: "When the order is placed, score 25+", icon: Eye, tone: "text-watch", lead: stages.earlyLead, k: stages.early },
-                    { name: "Delay alert", when: "An hour after planned dispatch, score 50+", icon: TriangleAlert, tone: "text-risk", lead: stages.dispLead, k: stages.disp },
+                    { name: "Delay alert", when: rule === "dispatch" ? "An hour after planned dispatch, score 50+ and truck late" : "An hour after planned dispatch, score 50+", icon: TriangleAlert, tone: "text-risk", lead: stages.dispLead, k: stages.disp },
                   ].map((s) => (
                     <div key={s.name} className="bg-panel p-4">
                       <p className={`flex items-center gap-1.5 text-sm font-semibold ${s.tone}`}>

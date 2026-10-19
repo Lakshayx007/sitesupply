@@ -47,6 +47,8 @@ export const LIVE_COLUMNS = `o.order_id, o.customer_id, o.site_name, o.vendor_id
   o.pts_vendor_recent_otif_below_80, o.pts_distance_over_50km, o.pts_ordered_under_24h, o.pts_monsoon, o.alert,
   o.alert_lead_hours, o.on_time, o.in_full, o.otif, o.cancelled`;
 
+import { getAlertRule, isAlert, type AlertRule } from "./alertRule";
+
 export type LiveStatus = "on-track" | "watch" | "at-risk" | "delayed" | "delivered" | "delivered-late" | "delivered-short";
 
 export type Stage = "ordered" | "confirmed" | "dispatched" | "in-transit" | "delivered";
@@ -66,7 +68,7 @@ export const isPlaced = (o: LiveOrder, now: number) => o.cancelled === 0 && ts(o
 
 export const isDelivered = (o: LiveOrder, now: number) => o.delivered_ts !== null && ts(o.delivered_ts) <= now;
 
-export function liveStatus(o: LiveOrder, now: number): LiveStatus {
+export function liveStatus(o: LiveOrder, now: number, rule: AlertRule = getAlertRule()): LiveStatus {
   if (isDelivered(o, now)) {
     if (o.otif === 1) return "delivered";
     if (o.on_time === 0) return "delivered-late";
@@ -74,7 +76,9 @@ export function liveStatus(o: LiveOrder, now: number): LiveStatus {
   }
   if (now >= ts(o.promised_ts)) return "delayed";
   if (now < ts(o.check_ts)) return earlyScore(o) >= WATCH_AT ? "watch" : "on-track";
-  return o.risk_score >= ALERT_AT ? "at-risk" : "on-track";
+  if (isAlert(o, rule)) return "at-risk";
+  // Under the dispatch rule, a high score without a late truck stays on Watch instead of alerting.
+  return o.risk_score >= ALERT_AT ? "watch" : "on-track";
 }
 
 /** The score the system can show at `now`: early score before the check, full score after. */
@@ -82,8 +86,8 @@ export function liveScore(o: LiveOrder, now: number): { score: number; full: boo
   return now < ts(o.check_ts) ? { score: earlyScore(o), full: false } : { score: o.risk_score, full: true };
 }
 
-/** Has an alert been sent by `now`? Alerts go out at the dispatch check (check_ts) when the score is ≥ 50. */
-export const alertSent = (o: LiveOrder, now: number) => o.alert === 1 && now >= ts(o.check_ts);
+/** Has an alert been sent by `now`? Alerts go out at the dispatch check (check_ts). See alertRule.ts. */
+export const alertSent = (o: LiveOrder, now: number, rule: AlertRule = getAlertRule()) => isAlert(o, rule) && now >= ts(o.check_ts);
 
 export function stage(o: LiveOrder, now: number): Stage {
   if (isDelivered(o, now)) return "delivered";
