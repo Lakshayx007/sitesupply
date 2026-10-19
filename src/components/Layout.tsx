@@ -123,6 +123,8 @@ function Footer() {
             <li><NavLink to="/console" className="hover:text-ink">Live console</NavLink></li>
             <li><NavLink to="/console/alerts" className="hover:text-ink">Alerts</NavLink></li>
             <li><NavLink to="/console/site" className="hover:text-ink">Site engineer view</NavLink></li>
+            <li><NavLink to="/console/vendors" className="hover:text-ink">Vendor scorecard</NavLink></li>
+            <li><NavLink to="/console/analytics" className="hover:text-ink">Analytics</NavLink></li>
             <li><NavLink to="/console/ask" className="hover:text-ink">Ask SiteSupply</NavLink></li>
           </ul>
         </div>

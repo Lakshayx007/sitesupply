@@ -168,12 +168,14 @@ function Feature({
   body,
   points,
   visual,
+  link,
   flip = false,
 }: {
   title: string;
   body: string;
   points: { icon: typeof Eye; text: string }[];
   visual: ReactNode;
+  link?: { to: string; label: string };
   flip?: boolean;
 }) {
   return (
@@ -189,6 +191,11 @@ function Feature({
             </li>
           ))}
         </ul>
+        {link && (
+          <Link to={link.to} className="link mt-7 inline-block text-[15px]">
+            {link.label}
+          </Link>
+        )}
       </div>
       <div className={`min-w-0 ${flip ? "lg:order-1" : ""}`}>{visual}</div>
     </div>
@@ -393,6 +400,7 @@ export default function Home() {
             { icon: LayoutList, text: "The live board puts delayed and at-risk orders at the top." },
           ]}
           visual={<RulesVisual />}
+          link={{ to: "/console", label: "See the live board" }}
         />
         <Feature
           flip
@@ -404,6 +412,7 @@ export default function Home() {
             { icon: Smartphone, text: "Made for the phone in a site engineer's pocket." },
           ]}
           visual={<PhoneVisual />}
+          link={{ to: "/console/alerts", label: "Open the alerts" }}
         />
         <Feature
           title="Know which vendors you can trust."
@@ -413,6 +422,7 @@ export default function Home() {
             { icon: Lock, text: "Every alert suggests the most reliable backup for that material." },
           ]}
           visual={<VendorVisual />}
+          link={{ to: "/console/vendors", label: "Open the vendor scorecard" }}
         />
       </section>
 

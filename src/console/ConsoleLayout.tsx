@@ -1,15 +1,32 @@
-import { Bell, ChevronLeft, FastForward, LayoutList, Pause, Play, Smartphone, Sparkles } from "lucide-react";
+import { BarChart3, Bell, ChevronLeft, FastForward, LayoutList, Pause, Play, Smartphone, Sparkles, Users } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "../components/Logo";
 import { WINDOW, alertSent, fromMin, ts } from "../lib/live";
 import { useConsole } from "./ConsoleContext";
 
-const NAV = [
-  { to: "/console", label: "Live board", icon: LayoutList, end: true },
-  { to: "/console/alerts", label: "Alerts", icon: Bell },
-  { to: "/console/site", label: "Site engineer view", short: "Site view", icon: Smartphone },
-  { to: "/console/ask", label: "Ask SiteSupply", short: "Ask", icon: Sparkles },
+type NavItem = { to: string; label: string; short?: string; icon: typeof Bell; end?: boolean; mobile?: boolean };
+
+const NAV: { group: string; items: NavItem[] }[] = [
+  {
+    group: "Operations",
+    items: [
+      { to: "/console", label: "Live board", short: "Board", icon: LayoutList, end: true, mobile: true },
+      { to: "/console/alerts", label: "Alerts", icon: Bell, mobile: true },
+      { to: "/console/site", label: "Site engineer view", short: "Site view", icon: Smartphone },
+    ],
+  },
+  {
+    group: "Insight",
+    items: [
+      { to: "/console/vendors", label: "Vendors", icon: Users, mobile: true },
+      { to: "/console/analytics", label: "Analytics", icon: BarChart3, mobile: true },
+      { to: "/console/ask", label: "Ask SiteSupply", short: "Ask", icon: Sparkles, mobile: true },
+    ],
+  },
 ];
+const ALL = NAV.flatMap((g) => g.items);
+/** Pages that read the whole history, so the replay clock does not apply. */
+const NO_CLOCK = ["/console/ask", "/console/vendors", "/console/analytics"];
 
 const SPEEDS = [
   { v: 60, label: "1 h/s" },
@@ -106,7 +123,10 @@ export function ConsoleLayout() {
           <Logo />
         </div>
         <nav aria-label="Console" className="flex flex-col gap-0.5 px-2 py-2">
-          {NAV.map(({ to, label, icon: Icon, end }) => (
+          {NAV.map((g) => (
+            <div key={g.group} className="mb-3">
+              <p className="px-2.5 pb-1 pt-1 text-[11px] font-medium text-muted">{g.group}</p>
+          {g.items.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -122,6 +142,8 @@ export function ConsoleLayout() {
               )}
             </NavLink>
           ))}
+            </div>
+          ))}
         </nav>
         <div className="mt-auto border-t border-line p-3">
           <NavLink to="/" className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted hover:text-ink">
@@ -134,19 +156,24 @@ export function ConsoleLayout() {
       {/* Mobile top bar */}
       <div className="flex h-12 items-center justify-between border-b border-line bg-panel px-4 lg:hidden">
         <Logo />
-        <NavLink to="/" className="text-xs text-muted hover:text-ink">
-          Exit console
-        </NavLink>
+        <div className="flex items-center gap-4">
+          <NavLink to="/console/site" className="text-xs text-muted hover:text-ink">
+            Phone view
+          </NavLink>
+          <NavLink to="/" className="text-xs text-muted hover:text-ink">
+            Exit
+          </NavLink>
+        </div>
       </div>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {pathname !== "/console/ask" && <ReplayBar />}
+        {!NO_CLOCK.includes(pathname) && <ReplayBar />}
         <main id="main" tabIndex={-1} className="min-h-0 flex-1 focus:outline-none">
           <Outlet />
         </main>
         {/* Mobile tab bar */}
-        <nav aria-label="Console" className="grid grid-cols-4 border-t border-line bg-panel lg:hidden">
-          {NAV.map(({ to, label, short, icon: Icon, end }) => (
+        <nav aria-label="Console" className="grid grid-cols-5 border-t border-line bg-panel lg:hidden">
+          {ALL.filter((n) => n.mobile).map(({ to, label, short, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { HashRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ToastProvider } from "./components/ui";
@@ -8,6 +9,11 @@ import { AlertsView, AskView, SiteView } from "./console/Views";
 import { DbProvider } from "./db/DbProvider";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
+
+// Chart-heavy pages load on demand so the landing page stays light.
+const Analytics = lazy(() => import("./console/Analytics").then((m) => ({ default: m.Analytics })));
+const Vendors = lazy(() => import("./console/Vendors").then((m) => ({ default: m.Vendors })));
+const Loading = () => <div className="p-6 text-sm text-muted">Loading…</div>;
 
 /** Old /demo links from the build plan still work. */
 function DemoRedirect() {
@@ -39,6 +45,8 @@ export default function App() {
               <Route path="alerts" element={<AlertsView />} />
               <Route path="site" element={<SiteView />} />
               <Route path="ask" element={<AskView />} />
+              <Route path="vendors" element={<Suspense fallback={<Loading />}><Vendors /></Suspense>} />
+              <Route path="analytics" element={<Suspense fallback={<Loading />}><Analytics /></Suspense>} />
             </Route>
             <Route path="demo" element={<DemoRedirect />} />
             <Route path="demo/order/:id" element={<DemoRedirect />} />
