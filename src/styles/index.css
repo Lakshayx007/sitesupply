@@ -3,126 +3,126 @@
 @tailwind utilities;
 
 /*
-  SiteSupply design tokens (see CLAUDE.md → Design system).
-  Values are "R G B" channels so Tailwind can add opacity, e.g. bg-primary/10.
-  The four status colours are reserved for status and never used for chart series.
-  *-ink variants are darker (light mode) / brighter (dark mode) versions that pass
-  WCAG AA (4.5:1) as text on both surface and subtle.
+  SiteSupply design tokens. See docs/DESIGN.md.
+  A dark, product-first system adapted from the Linear DESIGN.md in
+  VoltAgent/awesome-claude-design (MIT), recoloured with SiteSupply's brand:
+  steel blue for action, safety orange only for risk.
+  Values are "R G B" channels so Tailwind can add opacity (bg-primary/10).
+  Every text colour below passes WCAG AA on canvas, panel and raised.
 */
 @layer base {
   :root {
-    color-scheme: light;
-    --ink: 15 23 42;            /* #0F172A main text */
-    --muted: 91 107 128;        /* #5B6B80 secondary text (brief: #64748B, darkened a touch so it passes AA on subtle panels) */
-    --surface: 255 255 255;     /* #FFFFFF page and cards */
-    --subtle: 241 245 249;      /* #F1F5F9 panels */
-    --border: 226 232 240;      /* #E2E8F0 lines and card edges */
-    --primary: 47 111 222;      /* #2F6FDE steel blue: main series, buttons */
-    --primary-fg: 255 255 255;  /* text on primary buttons (4.7:1) */
-    --primary-ink: 36 89 194;   /* #2459C2 primary as text/links */
-    --accent: 232 131 58;       /* #E8833A safety orange: second series, highlights */
-    --accent-ink: 176 83 26;    /* #B0531A accent as text */
-    --status-good: 46 158 106;  /* #2E9E6A + check icon */
-    --status-watch: 201 154 6;  /* #C99A06 + eye icon */
-    --status-risk: 232 131 58;  /* #E8833A + warning icon */
-    --status-late: 214 69 69;   /* #D64545 + clock icon */
-    --status-good-ink: 30 122 80;
-    --status-watch-ink: 134 101 0;
-    --status-risk-ink: 176 83 26;
-    --status-late-ink: 179 47 47;
-    --grid: 226 232 240;
-    /* The night band used for the story section: same in both themes. */
-    --band: 15 23 42;
-    --band-fg: 226 232 240;
-    --band-muted: 148 163 184;
-    --band-line: 51 65 85;
-  }
-
-  .dark {
     color-scheme: dark;
-    --ink: 226 232 240;
-    --muted: 148 163 184;
-    --surface: 11 18 32;
-    --subtle: 19 28 46;
-    --border: 36 48 68;
-    --primary: 107 155 242;
-    --primary-fg: 11 18 32;
-    --primary-ink: 125 168 245;
-    --accent: 240 153 90;
-    --accent-ink: 240 153 90;
-    --status-good: 63 191 133;
-    --status-watch: 224 177 28;
-    --status-risk: 240 153 90;
-    --status-late: 239 107 107;
-    --status-good-ink: 63 191 133;
-    --status-watch-ink: 224 177 28;
-    --status-risk-ink: 240 153 90;
-    --status-late-ink: 239 107 107;
-    --grid: 36 48 68;
-    --band: 6 11 22;
-    --band-line: 36 48 68;
+    /* surfaces: a ladder, lightest last */
+    --canvas: 7 9 13;          /* #07090D page */
+    --panel: 13 16 21;         /* #0D1015 cards, app chrome */
+    --raised: 19 23 30;        /* #13171E hovered / selected / inputs */
+    --overlay: 26 31 40;       /* #1A1F28 menus, popovers */
+    --line: 34 39 48;          /* #222730 hairline */
+    --line-strong: 50 57 69;   /* #323945 inputs, focus edges */
+    /* text */
+    --ink: 244 246 248;        /* #F4F6F8 */
+    --ink-2: 201 208 218;      /* #C9D0DA secondary */
+    --muted: 139 147 161;      /* #8B93A1 tertiary (6.3:1 on canvas) */
+    /* brand */
+    --primary: 47 111 222;     /* #2F6FDE steel blue: buttons */
+    --primary-hover: 74 130 234;
+    --primary-fg: 255 255 255;
+    --primary-ink: 127 168 245; /* #7FA8F5 links, highlights on dark */
+    --accent: 232 131 58;      /* #E8833A safety orange */
+    /* status: colour + icon + label, never colour alone */
+    --good: 63 191 133;        /* #3FBF85 */
+    --watch: 224 177 28;       /* #E0B11C */
+    --risk: 240 153 90;        /* #F0995A */
+    --late: 239 107 107;       /* #EF6B6B */
+    --chart-grid: 34 39 48;
   }
 
   html {
     -webkit-text-size-adjust: 100%;
+    background: rgb(var(--canvas));
   }
 
   body {
-    @apply bg-surface text-ink font-sans antialiased;
-    font-feature-settings: "cv11", "ss01";
+    @apply bg-canvas font-sans text-ink antialiased;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    letter-spacing: -0.006em;
+  }
+
+  ::selection {
+    background: rgb(var(--primary) / 0.45);
   }
 
   :focus-visible {
-    outline: 2px solid rgb(var(--primary));
+    outline: 2px solid rgb(var(--primary-ink) / 0.8);
     outline-offset: 2px;
-    border-radius: 6px;
+    border-radius: 8px;
   }
 
-  code, kbd, pre, .num {
-    @apply font-mono;
+  h1, h2, h3 {
+    text-wrap: balance;
   }
 
   .num {
+    @apply font-mono;
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  /* thin dark scrollbars inside app panes */
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--line-strong)) transparent;
   }
 }
 
 @layer components {
-  .card {
-    @apply rounded-card border border-border bg-surface shadow-card;
-  }
   .panel {
-    @apply rounded-card bg-subtle;
+    @apply rounded-xl border border-line bg-panel;
+  }
+  /* product UI frames get the faint top edge highlight */
+  .frame {
+    @apply rounded-2xl border border-line bg-panel;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.04),
+      0 30px 80px -30px rgb(0 0 0 / 0.8);
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors;
+    @apply inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-primary text-primary-fg hover:bg-primary/90;
+    @apply btn bg-primary text-primary-fg hover:bg-primary-hover;
   }
   .btn-secondary {
-    @apply btn border border-border bg-surface text-ink hover:bg-subtle;
+    @apply btn border border-line bg-panel text-ink hover:border-line-strong hover:bg-raised;
+  }
+  .btn-ghost {
+    @apply btn text-ink-2 hover:bg-raised hover:text-ink;
   }
   .link {
     @apply font-medium text-primary-ink underline-offset-4 hover:underline;
   }
   .eyebrow {
-    @apply text-sm font-medium text-muted;
+    @apply text-[13px] font-medium tracking-[0.02em] text-primary-ink;
   }
-  /* Faint drafting grid, used behind the hero and page headers. */
-  .blueprint {
+  .display {
+    @apply font-semibold tracking-[-0.035em];
+  }
+  .input {
+    @apply min-h-[40px] w-full rounded-lg border border-line-strong bg-panel px-3 text-sm text-ink placeholder:text-muted focus:border-primary-ink/60 focus:outline-none;
+  }
+  .kbd {
+    @apply rounded border border-line-strong bg-raised px-1.5 py-0.5 font-mono text-[11px] text-ink-2;
+  }
+  .grid-bg {
     background-image:
-      linear-gradient(rgb(var(--grid) / 0.7) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(var(--grid) / 0.7) 1px, transparent 1px);
-    background-size: 32px 32px;
-    background-position: -1px -1px;
+      linear-gradient(rgb(var(--line) / 0.55) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--line) / 0.55) 1px, transparent 1px);
+    background-size: 48px 48px;
   }
-  .fade-mask {
-    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
-    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
-  }
-  h1, h2, h3 {
-    text-wrap: balance;
+  .fade-y {
+    mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 70%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 70%, transparent);
   }
 }
 
@@ -136,9 +136,20 @@
   left: 8px;
 }
 
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, rgb(var(--raised)) 0%, rgb(var(--overlay)) 50%, rgb(var(--raised)) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
