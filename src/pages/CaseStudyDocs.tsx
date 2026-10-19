@@ -63,7 +63,7 @@ export function Documents() {
               );
             },
             table: ({ children }) => (
-              <div className="scroll-thin my-5 overflow-x-auto rounded-lg border border-line">
+              <div tabIndex={0} className="scroll-thin my-5 overflow-x-auto rounded-lg border border-line">
                 <table>{children}</table>
               </div>
             ),

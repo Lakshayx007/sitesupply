@@ -62,6 +62,7 @@ export function Board() {
 
   return (
     <div className="flex h-full min-h-0">
+      <h1 className="sr-only">Live board</h1>
       <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${selected ? "hidden md:flex" : "flex"}`}>
         {/* Summary */}
         <dl className="grid grid-cols-2 gap-px border-b border-line bg-line sm:grid-cols-5">

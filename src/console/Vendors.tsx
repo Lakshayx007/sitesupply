@@ -182,7 +182,7 @@ export function Vendors() {
             <h2 id="scorecard" className="text-[15px] font-semibold">Scorecard</h2>
             <p className="text-xs text-muted">Click a column to sort</p>
           </div>
-          <div className="scroll-thin mt-3 overflow-x-auto">
+          <div tabIndex={0} role="region" aria-label="Scorecard table, scrolls sideways" className="scroll-thin mt-3 overflow-x-auto">
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead className="border-y border-line bg-raised/50 text-xs text-muted">
                 <tr>
