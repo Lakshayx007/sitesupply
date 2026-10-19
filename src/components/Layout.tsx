@@ -125,12 +125,14 @@ function Footer() {
             <li><NavLink to="/console/site" className="hover:text-ink">Site engineer view</NavLink></li>
             <li><NavLink to="/console/vendors" className="hover:text-ink">Vendor scorecard</NavLink></li>
             <li><NavLink to="/console/analytics" className="hover:text-ink">Analytics</NavLink></li>
+            <li><NavLink to="/console/tuning" className="hover:text-ink">Alert tuning</NavLink></li>
             <li><NavLink to="/console/ask" className="hover:text-ink">Ask SiteSupply</NavLink></li>
           </ul>
         </div>
         <div>
           <p className="text-sm font-medium text-ink">About</p>
           <ul className="mt-3 space-y-2 text-sm text-muted">
+            <li><NavLink to="/case-study" className="hover:text-ink">Case study</NavLink></li>
             <li><button onClick={() => scrollTo("how")} className="hover:text-ink">How the score works</button></li>
             <li>
               <a href={SITE.githubUrl} className="inline-flex items-center gap-1 hover:text-ink" target="_blank" rel="noreferrer">

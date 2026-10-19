@@ -12,7 +12,9 @@ import NotFound from "./pages/NotFound";
 
 // Chart-heavy pages load on demand so the landing page stays light.
 const Analytics = lazy(() => import("./console/Analytics").then((m) => ({ default: m.Analytics })));
+const Tuning = lazy(() => import("./console/Tuning").then((m) => ({ default: m.Tuning })));
 const Vendors = lazy(() => import("./console/Vendors").then((m) => ({ default: m.Vendors })));
+const CaseStudy = lazy(() => import("./pages/CaseStudy"));
 const Loading = () => <div className="p-6 text-sm text-muted">Loading…</div>;
 
 /** Old /demo links from the build plan still work. */
@@ -29,6 +31,7 @@ export default function App() {
           <Routes>
             <Route element={<Layout />}>
               <Route index element={<Home />} />
+              <Route path="case-study" element={<Suspense fallback={<Loading />}><CaseStudy /></Suspense>} />
               <Route path="*" element={<NotFound />} />
             </Route>
             <Route
@@ -47,6 +50,7 @@ export default function App() {
               <Route path="ask" element={<AskView />} />
               <Route path="vendors" element={<Suspense fallback={<Loading />}><Vendors /></Suspense>} />
               <Route path="analytics" element={<Suspense fallback={<Loading />}><Analytics /></Suspense>} />
+              <Route path="tuning" element={<Suspense fallback={<Loading />}><Tuning /></Suspense>} />
             </Route>
             <Route path="demo" element={<DemoRedirect />} />
             <Route path="demo/order/:id" element={<DemoRedirect />} />

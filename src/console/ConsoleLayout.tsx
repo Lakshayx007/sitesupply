@@ -1,4 +1,4 @@
-import { BarChart3, Bell, ChevronLeft, FastForward, LayoutList, Pause, Play, Smartphone, Sparkles, Users } from "lucide-react";
+import { BarChart3, Bell, ChevronLeft, FastForward, LayoutList, Pause, Play, SlidersHorizontal, Smartphone, Sparkles, Users } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "../components/Logo";
 import { WINDOW, alertSent, fromMin, ts } from "../lib/live";
@@ -19,14 +19,15 @@ const NAV: { group: string; items: NavItem[] }[] = [
     group: "Insight",
     items: [
       { to: "/console/vendors", label: "Vendors", icon: Users, mobile: true },
-      { to: "/console/analytics", label: "Analytics", icon: BarChart3, mobile: true },
+      { to: "/console/analytics", label: "Analytics", short: "Stats", icon: BarChart3, mobile: true },
+      { to: "/console/tuning", label: "Alert tuning", short: "Tuning", icon: SlidersHorizontal, mobile: true },
       { to: "/console/ask", label: "Ask SiteSupply", short: "Ask", icon: Sparkles, mobile: true },
     ],
   },
 ];
 const ALL = NAV.flatMap((g) => g.items);
 /** Pages that read the whole history, so the replay clock does not apply. */
-const NO_CLOCK = ["/console/ask", "/console/vendors", "/console/analytics"];
+const NO_CLOCK = ["/console/ask", "/console/vendors", "/console/analytics", "/console/tuning"];
 
 const SPEEDS = [
   { v: 60, label: "1 h/s" },
@@ -172,7 +173,7 @@ export function ConsoleLayout() {
           <Outlet />
         </main>
         {/* Mobile tab bar */}
-        <nav aria-label="Console" className="grid grid-cols-5 border-t border-line bg-panel lg:hidden">
+        <nav aria-label="Console" className="grid grid-cols-6 border-t border-line bg-panel lg:hidden">
           {ALL.filter((n) => n.mobile).map(({ to, label, short, icon: Icon, end }) => (
             <NavLink
               key={to}

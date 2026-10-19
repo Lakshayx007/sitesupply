@@ -354,7 +354,12 @@ function Results() {
           </div>
         ))}
       </dl>
-      <p className="mt-3 text-xs text-muted">Measured on a 25-week simulation of {n.toLocaleString("en-US")} deliveries.</p>
+      <p className="mt-3 text-xs text-muted">
+        Measured on a 25-week simulation of {n.toLocaleString("en-US")} deliveries.{" "}
+        <Link to="/case-study" className="link">
+          How it was measured
+        </Link>
+      </p>
     </div>
   );
 }

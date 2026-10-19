@@ -37,6 +37,8 @@ export default defineConfig(({ mode }) => {
     base: "./",
     plugins: [react(), localAiApi(env.GROQ_API_KEY)],
     build: { chunkSizeWarningLimit: 1500 },
+    // ASCII-only output: escapes characters like U+FFFD that some hosts reject in JS files.
+    esbuild: { charset: "ascii" },
     test: { environment: "node", include: ["src/**/*.test.ts"] },
   };
 });
