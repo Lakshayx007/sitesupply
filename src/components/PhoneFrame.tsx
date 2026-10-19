@@ -29,15 +29,15 @@ export function PhoneFrame({
     <div
       role={label ? "group" : undefined}
       aria-label={label}
-      className={`relative shrink-0 rounded-[48px] bg-[#0B1220] p-[10px] shadow-phone ${className}`}
+      className={`relative shrink-0 rounded-[48px] bg-[#161A21] p-[10px] shadow-[0_0_0_1px_rgb(var(--line-strong)),0_40px_100px_-30px_rgb(0_0_0/0.9)] ${className}`}
       style={{ width, maxWidth: "100%", aspectRatio: "390 / 844" }}
     >
       {/* side buttons */}
-      <span aria-hidden="true" className="absolute -left-[3px] top-[18%] h-10 w-[3px] rounded-l bg-[#1E293B]" />
-      <span aria-hidden="true" className="absolute -left-[3px] top-[27%] h-16 w-[3px] rounded-l bg-[#1E293B]" />
-      <span aria-hidden="true" className="absolute -right-[3px] top-[22%] h-20 w-[3px] rounded-r bg-[#1E293B]" />
+      <span aria-hidden="true" className="absolute -left-[3px] top-[18%] h-10 w-[3px] rounded-l bg-[#262C36]" />
+      <span aria-hidden="true" className="absolute -left-[3px] top-[27%] h-16 w-[3px] rounded-l bg-[#262C36]" />
+      <span aria-hidden="true" className="absolute -right-[3px] top-[22%] h-20 w-[3px] rounded-r bg-[#262C36]" />
 
-      <div className="relative flex h-full flex-col overflow-hidden rounded-[38px] bg-subtle">
+      <div className="relative flex h-full flex-col overflow-hidden rounded-[38px] bg-canvas">
         {/* status bar */}
         <div aria-hidden="true" className="relative z-20 flex h-11 shrink-0 items-center justify-between px-7 pt-1 text-[13px] font-semibold text-ink">
           <span className="num tabular-nums">{time}</span>

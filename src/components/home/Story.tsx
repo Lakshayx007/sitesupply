@@ -40,7 +40,7 @@ export function Story() {
               <span
                 aria-hidden="true"
                 className={`absolute -left-[37px] top-1.5 h-[9px] w-[9px] rounded-full ring-4 ring-panel ${
-                  i === TIMELINE.length - 1 ? "bg-accent" : "bg-panel-muted"
+                  i === TIMELINE.length - 1 ? "bg-risk" : "bg-line-strong"
                 }`}
               />
               <p className="num text-sm font-semibold text-ink">{t.time}</p>
@@ -50,7 +50,7 @@ export function Story() {
         </ol>
 
         <div className="lg:col-span-2">
-          <div className="grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
             {SIGNALS.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-start gap-3 bg-panel p-5">
                 <Icon aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-risk" />
