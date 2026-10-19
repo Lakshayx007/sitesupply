@@ -258,8 +258,9 @@ export function Vendors() {
                 all-vendor average ({pct(pbar)}) mixed in. Vendors with lots of orders barely move; new ones are pulled toward the
                 middle until they prove themselves.
               </p>
+              <ShrinkPlayground data={data} pbar={pbar} />
               {L && G && (
-                <ul className="mt-3 space-y-1.5 text-sm text-ink-2">
+                <ul className="mt-4 space-y-1.5 border-t border-line pt-4 text-sm text-ink-2">
                   <li>
                     <span className="font-medium text-ink">{L.vendor_name}</span>: {pct(L.otif)} on only {L.n} orders. The true rate could be
                     anywhere from {pct(L.lo, 0)} to {pct(L.hi, 0)}, so it becomes {pct(L.adjusted)}.
@@ -284,6 +285,52 @@ export function Vendors() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* Drag the prior strength and watch a vendor's adjusted score move toward the all-vendor average. */
+function ShrinkPlayground({ data, pbar }: { data: { vendor_id: string; vendor_name: string; n: number; s: number; otif: number }[]; pbar: number }) {
+  const [vid, setVid] = useState("VL");
+  const [k, setK] = useState(K);
+  const v = data.find((d) => d.vendor_id === vid) ?? data[0];
+  if (!v) return null;
+  const adj = shrink(v.s, v.n, pbar, k);
+  const x = (p: number) => `${((p - 0.4) / 0.5) * 100}%`;
+  const weight = v.n / (v.n + k);
+  return (
+    <div className="mt-4 rounded-lg border border-line bg-raised/40 p-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label htmlFor="shrink-vendor" className="text-xs text-muted">
+            Vendor
+          </label>
+          <select id="shrink-vendor" value={vid} onChange={(e) => setVid(e.target.value)} className="input mt-1 min-h-[34px] py-1 text-sm">
+            {[...data].sort((a, b) => a.vendor_name.localeCompare(b.vendor_name)).map((d) => (
+              <option key={d.vendor_id} value={d.vendor_id}>
+                {d.vendor_name} ({d.n} orders)
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="shrink-k" className="flex justify-between text-xs text-muted">
+            Prior strength <span className="tabular-nums text-ink">{k} orders</span>
+          </label>
+          <input id="shrink-k" type="range" min={0} max={100} value={k} onChange={(e) => setK(Number(e.target.value))} className="mt-3 w-full accent-[rgb(var(--primary))]" />
+        </div>
+      </div>
+      <div className="relative mt-5 h-8" aria-hidden="true">
+        <span className="absolute inset-x-0 top-1/2 h-px bg-line-strong" />
+        <span className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-ink-2" style={{ left: x(pbar) }} />
+        <span className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink-2 bg-panel" style={{ left: x(v.otif) }} />
+        <span className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-ink transition-[left] duration-200" style={{ left: x(adj) }} />
+      </div>
+      <p className="text-sm text-ink-2" aria-live="polite">
+        Raw <span className="font-semibold tabular-nums text-ink">{pct(v.otif)}</span>, adjusted{" "}
+        <span className="font-semibold tabular-nums text-primary-ink">{pct(adj)}</span>. The vendor's own record carries {pct(weight, 0)} of the weight,
+        the {pct(pbar)} average carries the rest.
+      </p>
     </div>
   );
 }
