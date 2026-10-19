@@ -31,6 +31,11 @@
     --status-risk-ink: 176 83 26;
     --status-late-ink: 179 47 47;
     --grid: 226 232 240;
+    /* The night band used for the story section: same in both themes. */
+    --band: 15 23 42;
+    --band-fg: 226 232 240;
+    --band-muted: 148 163 184;
+    --band-line: 51 65 85;
   }
 
   .dark {
@@ -54,6 +59,8 @@
     --status-risk-ink: 240 153 90;
     --status-late-ink: 239 107 107;
     --grid: 36 48 68;
+    --band: 6 11 22;
+    --band-line: 36 48 68;
   }
 
   html {
@@ -100,7 +107,22 @@
     @apply font-medium text-primary-ink underline-offset-4 hover:underline;
   }
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-wider text-muted;
+    @apply text-sm font-medium text-muted;
+  }
+  /* Faint drafting grid, used behind the hero and page headers. */
+  .blueprint {
+    background-image:
+      linear-gradient(rgb(var(--grid) / 0.7) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--grid) / 0.7) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-position: -1px -1px;
+  }
+  .fade-mask {
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
   }
 }
 

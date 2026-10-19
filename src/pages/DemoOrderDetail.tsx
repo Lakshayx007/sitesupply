@@ -5,7 +5,7 @@ export default function DemoOrderDetail() {
   const { id } = useParams();
   return (
     <>
-      <PageHeader eyebrow="Product demo" title={`Order detail · ${id}`}>
+      <PageHeader eyebrow="Product demo" title={`Order ${id}`}>
         One order from placement to delivery.
       </PageHeader>
       <Section>

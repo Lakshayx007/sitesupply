@@ -5,7 +5,7 @@ export default function DemoAlert() {
   const { id } = useParams();
   return (
     <>
-      <PageHeader eyebrow="Product demo" title={`Delay alert · ${id}`}>
+      <PageHeader eyebrow="Product demo" title={`Alert for order ${id}`}>
         The warning a site engineer gets when an order crosses the threshold.
       </PageHeader>
       <Section>

@@ -4,7 +4,7 @@ import { useDb } from "./DbProvider";
 
 export type Row = Record<string, SqlValue>;
 
-export interface QueryResult<T extends Row = Row> {
+export interface QueryResult<T = Row> {
   /** Rows as objects keyed by column name. */
   rows: T[];
   /** Column names in SELECT order (handy for the "Show SQL" result table). */
@@ -15,7 +15,7 @@ export interface QueryResult<T extends Row = Row> {
 }
 
 /** Runs one SQL statement and returns rows as objects. Throws on SQL errors. */
-export function runQuery<T extends Row = Row>(
+export function runQuery<T = Row>(
   db: Database,
   sql: string,
   params?: Record<string, SqlValue> | SqlValue[],
@@ -38,7 +38,7 @@ export function runQuery<T extends Row = Row>(
  *
  *   const { rows, loading, error } = useQuery<{ otif: number }>("SELECT AVG(otif) AS otif FROM orders WHERE cancelled = 0");
  */
-export function useQuery<T extends Row = Row>(
+export function useQuery<T = Row>(
   sql: string,
   params?: Record<string, SqlValue> | SqlValue[],
 ): QueryResult<T> {

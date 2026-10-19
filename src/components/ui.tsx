@@ -15,13 +15,16 @@ export function PageHeader({
   data?: boolean;
 }) {
   return (
-    <div className="mx-auto max-w-page px-4 pb-6 pt-10 sm:px-6 sm:pt-14">
-      <div className="flex flex-wrap items-center gap-3">
-        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-        {data && <SampleDataPill />}
+    <div className="relative overflow-hidden border-b border-border">
+      <div aria-hidden="true" className="blueprint fade-mask pointer-events-none absolute inset-0 opacity-60" />
+      <div className="relative mx-auto max-w-page px-4 pb-10 pt-10 sm:px-6 sm:pb-14 sm:pt-16">
+        <div className="flex flex-wrap items-center gap-3">
+          {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+          {data && <SampleDataPill />}
+        </div>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em] sm:text-5xl">{title}</h1>
+        {children && <div className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">{children}</div>}
       </div>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
-      {children && <div className="mt-3 max-w-3xl text-base text-muted sm:text-lg">{children}</div>}
     </div>
   );
 }
@@ -56,8 +59,8 @@ export function KpiTile({
 /** Placeholder listing what a page will contain once it is built (Sessions 2–5). */
 export function Planned({ session, items }: { session: number; items: string[] }) {
   return (
-    <div className="panel border border-dashed border-border p-6">
-      <p className="eyebrow">Coming in build session {session}</p>
+    <div className="mt-10 rounded-card border border-dashed border-border p-6">
+      <p className="text-sm font-semibold">Coming in build session {session}</p>
       <ul className="mt-3 grid gap-2 text-sm text-ink sm:grid-cols-2">
         {items.map((i) => (
           <li key={i} className="flex gap-2">
