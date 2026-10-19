@@ -7,3 +7,5 @@ __pycache__/
 coverage/
 .vercel/
 .netlify/
+.env.local
+.env.*.local
