@@ -1,0 +1,467 @@
+{
+ "headline": {
+  "orders": 1158,
+  "delivered": 1138,
+  "cancelled": 20,
+  "enquiries": 3166,
+  "otif": 0.7,
+  "on_time": 0.751,
+  "in_full": 0.932,
+  "late_orders": 283,
+  "delay_median_h": 7.0,
+  "delay_mean_h": 10.9,
+  "delay_p90_h": 22.3,
+  "weeks": 25,
+  "orders_per_week": 45.5
+ },
+ "pchart": {
+  "pbar": 0.7,
+  "weeks_below_lcl": [],
+  "weeks_above_ucl": [],
+  "pre_monsoon_otif": 0.763,
+  "monsoon_otif": 0.664
+ },
+ "vendors": [
+  {
+   "vendor_id": "VK",
+   "n": 180,
+   "s": 102.0,
+   "avg_delay_h": 10.193,
+   "otif": 0.567,
+   "ci_lo": 0.494,
+   "ci_hi": 0.637,
+   "otif_shrunk": 0.58
+  },
+  {
+   "vendor_id": "VG",
+   "n": 205,
+   "s": 117.0,
+   "avg_delay_h": 11.145,
+   "otif": 0.571,
+   "ci_lo": 0.502,
+   "ci_hi": 0.637,
+   "otif_shrunk": 0.582
+  },
+  {
+   "vendor_id": "VL",
+   "n": 21,
+   "s": 14.0,
+   "avg_delay_h": 15.538,
+   "otif": 0.667,
+   "ci_lo": 0.454,
+   "ci_hi": 0.828,
+   "otif_shrunk": 0.683
+  },
+  {
+   "vendor_id": "VC",
+   "n": 30,
+   "s": 21.0,
+   "avg_delay_h": 9.662,
+   "otif": 0.7,
+   "ci_lo": 0.521,
+   "ci_hi": 0.833,
+   "otif_shrunk": 0.7
+  },
+  {
+   "vendor_id": "VI",
+   "n": 133,
+   "s": 100.0,
+   "avg_delay_h": 12.79,
+   "otif": 0.752,
+   "ci_lo": 0.672,
+   "ci_hi": 0.818,
+   "otif_shrunk": 0.745
+  },
+  {
+   "vendor_id": "VF",
+   "n": 52,
+   "s": 40.0,
+   "avg_delay_h": 12.664,
+   "otif": 0.769,
+   "ci_lo": 0.639,
+   "ci_hi": 0.863,
+   "otif_shrunk": 0.75
+  },
+  {
+   "vendor_id": "VA",
+   "n": 108,
+   "s": 83.0,
+   "avg_delay_h": 12.193,
+   "otif": 0.769,
+   "ci_lo": 0.681,
+   "ci_hi": 0.838,
+   "otif_shrunk": 0.758
+  },
+  {
+   "vendor_id": "VH",
+   "n": 80,
+   "s": 62.0,
+   "avg_delay_h": 7.201,
+   "otif": 0.775,
+   "ci_lo": 0.672,
+   "ci_hi": 0.853,
+   "otif_shrunk": 0.76
+  },
+  {
+   "vendor_id": "VE",
+   "n": 102,
+   "s": 79.0,
+   "avg_delay_h": 7.654,
+   "otif": 0.775,
+   "ci_lo": 0.684,
+   "ci_hi": 0.845,
+   "otif_shrunk": 0.762
+  },
+  {
+   "vendor_id": "VB",
+   "n": 48,
+   "s": 38.0,
+   "avg_delay_h": 5.87,
+   "otif": 0.792,
+   "ci_lo": 0.657,
+   "ci_hi": 0.883,
+   "otif_shrunk": 0.765
+  },
+  {
+   "vendor_id": "VD",
+   "n": 83,
+   "s": 65.0,
+   "avg_delay_h": 11.705,
+   "otif": 0.783,
+   "ci_lo": 0.683,
+   "ci_hi": 0.858,
+   "otif_shrunk": 0.767
+  },
+  {
+   "vendor_id": "VJ",
+   "n": 96,
+   "s": 76.0,
+   "avg_delay_h": 11.154,
+   "otif": 0.792,
+   "ci_lo": 0.7,
+   "ci_hi": 0.861,
+   "otif_shrunk": 0.776
+  }
+ ],
+ "shrinkage_prior_strength": 20,
+ "monsoon_test": {
+  "late_rate_monsoon": 0.297,
+  "late_rate_dry": 0.165,
+  "n_monsoon": 720,
+  "n_dry": 418,
+  "diff": 0.132,
+  "diff_ci": [
+   0.083,
+   0.181
+  ],
+  "chi2": 24.72,
+  "p_value": 6.6e-07
+ },
+ "logit": {
+  "n": 1138,
+  "pseudo_r2": 0.043,
+  "odds_ratios": [
+   {
+    "factor": "Vendor's recent OTIF below 80%",
+    "or": 1.486,
+    "lo": 1.117,
+    "hi": 1.978,
+    "p": 0.007
+   },
+   {
+    "factor": "Monsoon",
+    "or": 2.05,
+    "lo": 1.497,
+    "hi": 2.808,
+    "p": 0.0
+   },
+   {
+    "factor": "Distance over 50 km",
+    "or": 1.635,
+    "lo": 1.239,
+    "hi": 2.156,
+    "p": 0.001
+   },
+   {
+    "factor": "Ordered under 24 h before need",
+    "or": 1.669,
+    "lo": 1.185,
+    "hi": 2.351,
+    "p": 0.003
+   },
+   {
+    "factor": "Ready-mix concrete",
+    "or": 1.219,
+    "lo": 0.854,
+    "hi": 1.741,
+    "p": 0.275
+   }
+  ]
+ },
+ "alert_sweep": [
+  {
+   "alerts": 839,
+   "tp": 272,
+   "fp": 567,
+   "fn": 11,
+   "precision": 0.324,
+   "recall": 0.961,
+   "threshold": 20,
+   "alerts_per_week": 33.6
+  },
+  {
+   "alerts": 819,
+   "tp": 271,
+   "fp": 548,
+   "fn": 12,
+   "precision": 0.331,
+   "recall": 0.958,
+   "threshold": 25,
+   "alerts_per_week": 32.8
+  },
+  {
+   "alerts": 680,
+   "tp": 261,
+   "fp": 419,
+   "fn": 22,
+   "precision": 0.384,
+   "recall": 0.922,
+   "threshold": 30,
+   "alerts_per_week": 27.2
+  },
+  {
+   "alerts": 680,
+   "tp": 261,
+   "fp": 419,
+   "fn": 22,
+   "precision": 0.384,
+   "recall": 0.922,
+   "threshold": 35,
+   "alerts_per_week": 27.2
+  },
+  {
+   "alerts": 498,
+   "tp": 248,
+   "fp": 250,
+   "fn": 35,
+   "precision": 0.498,
+   "recall": 0.876,
+   "threshold": 40,
+   "alerts_per_week": 19.9
+  },
+  {
+   "alerts": 445,
+   "tp": 239,
+   "fp": 206,
+   "fn": 44,
+   "precision": 0.537,
+   "recall": 0.845,
+   "threshold": 45,
+   "alerts_per_week": 17.8
+  },
+  {
+   "alerts": 423,
+   "tp": 235,
+   "fp": 188,
+   "fn": 48,
+   "precision": 0.556,
+   "recall": 0.83,
+   "threshold": 50,
+   "alerts_per_week": 16.9
+  },
+  {
+   "alerts": 289,
+   "tp": 202,
+   "fp": 87,
+   "fn": 81,
+   "precision": 0.699,
+   "recall": 0.714,
+   "threshold": 55,
+   "alerts_per_week": 11.6
+  },
+  {
+   "alerts": 265,
+   "tp": 190,
+   "fp": 75,
+   "fn": 93,
+   "precision": 0.717,
+   "recall": 0.671,
+   "threshold": 60,
+   "alerts_per_week": 10.6
+  },
+  {
+   "alerts": 235,
+   "tp": 180,
+   "fp": 55,
+   "fn": 103,
+   "precision": 0.766,
+   "recall": 0.636,
+   "threshold": 65,
+   "alerts_per_week": 9.4
+  },
+  {
+   "alerts": 180,
+   "tp": 137,
+   "fp": 43,
+   "fn": 146,
+   "precision": 0.761,
+   "recall": 0.484,
+   "threshold": 70,
+   "alerts_per_week": 7.2
+  },
+  {
+   "alerts": 180,
+   "tp": 137,
+   "fp": 43,
+   "fn": 146,
+   "precision": 0.761,
+   "recall": 0.484,
+   "threshold": 75,
+   "alerts_per_week": 7.2
+  },
+  {
+   "alerts": 112,
+   "tp": 84,
+   "fp": 28,
+   "fn": 199,
+   "precision": 0.75,
+   "recall": 0.297,
+   "threshold": 80,
+   "alerts_per_week": 4.5
+  },
+  {
+   "alerts": 93,
+   "tp": 71,
+   "fp": 22,
+   "fn": 212,
+   "precision": 0.763,
+   "recall": 0.251,
+   "threshold": 85,
+   "alerts_per_week": 3.7
+  },
+  {
+   "alerts": 84,
+   "tp": 62,
+   "fp": 22,
+   "fn": 221,
+   "precision": 0.738,
+   "recall": 0.219,
+   "threshold": 90,
+   "alerts_per_week": 3.4
+  }
+ ],
+ "alert_at_50": {
+  "alerts": 423,
+  "tp": 235,
+  "fp": 188,
+  "fn": 48,
+  "precision": 0.556,
+  "recall": 0.83,
+  "lead_median_h": 2.5,
+  "lead_p25_h": 2.0,
+  "lead_p75_h": 3.0
+ },
+ "late_with_ontime_dispatch_share": 0.205,
+ "watchlist_at_order": {
+  "alerts": 750,
+  "tp": 226,
+  "fp": 524,
+  "fn": 57,
+  "precision": 0.301,
+  "recall": 0.799,
+  "threshold": 25,
+  "lead_median_h": 89.6,
+  "base_late_rate": 0.249
+ },
+ "funnel": [
+  {
+   "stage": "Enquiries",
+   "n": 1895
+  },
+  {
+   "stage": "Quoted",
+   "n": 1589
+  },
+  {
+   "stage": "Ordered",
+   "n": 723
+  },
+  {
+   "stage": "Dispatched",
+   "n": 711
+  },
+  {
+   "stage": "Delivered on time & in full",
+   "n": 521
+  },
+  {
+   "stage": "Paid within 60 days",
+   "n": 465
+  },
+  {
+   "stage": "Re-ordered within 30 days",
+   "n": 348
+  }
+ ],
+ "funnel_cohort": "Enquiries from 6 Apr to 12 Jul 2026",
+ "repeat": {
+  "after_otif": 0.513,
+  "after_failure": 0.396,
+  "n_otif": 694,
+  "n_failure": 278,
+  "z": 3.31,
+  "p_value": 0.00094
+ },
+ "ab_sizing": [
+  {
+   "baseline": 0.751,
+   "mde": 0.05,
+   "n_per_arm": 1089,
+   "weeks_at_current_volume": 47.8
+  },
+  {
+   "baseline": 0.751,
+   "mde": 0.08,
+   "n_per_arm": 403,
+   "weeks_at_current_volume": 17.7
+  }
+ ],
+ "by_material": [
+  {
+   "material": "20 mm aggregate",
+   "n": 165,
+   "otif": 0.691,
+   "late": 0.261
+  },
+  {
+   "material": "M-sand",
+   "n": 192,
+   "otif": 0.708,
+   "late": 0.224
+  },
+  {
+   "material": "OPC cement 53 grade",
+   "n": 212,
+   "otif": 0.679,
+   "late": 0.283
+  },
+  {
+   "material": "PPC cement",
+   "n": 180,
+   "otif": 0.717,
+   "late": 0.25
+  },
+  {
+   "material": "Ready-mix concrete M25",
+   "n": 194,
+   "otif": 0.66,
+   "late": 0.284
+  },
+  {
+   "material": "TMT steel bars",
+   "n": 195,
+   "otif": 0.749,
+   "late": 0.19
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+material_id,material,unit,qty_min,qty_max
+M1,OPC cement 53 grade,bags,200,1200
+M2,PPC cement,bags,200,1000
+M3,TMT steel bars,tonnes,5,40
+M4,Ready-mix concrete M25,m3,6,60
+M5,20 mm aggregate,tonnes,20,120
+M6,M-sand,tonnes,20,120
