@@ -1,0 +1,40 @@
+{
+  "name": "sitesupply",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "SiteSupply: a delivery-delay early-warning product for construction material orders (sample data).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "copy-wasm": "node scripts/copy-wasm.mjs",
+    "postinstall": "node scripts/copy-wasm.mjs"
+  },
+  "dependencies": {
+    "echarts": "^5.6.0",
+    "echarts-for-react": "^3.0.6",
+    "lucide-react": "^1.59.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.1.0",
+    "react-router-dom": "^6.30.6",
+    "remark-gfm": "^4.0.1",
+    "sql.js": "1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@types/sql.js": "^1.4.11",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.31",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~5.6.3",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.9"
+  }
+}

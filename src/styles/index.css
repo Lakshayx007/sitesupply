@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  SiteSupply design tokens (see CLAUDE.md → Design system).
+  Values are "R G B" channels so Tailwind can add opacity, e.g. bg-primary/10.
+  The four status colours are reserved for status and never used for chart series.
+  *-ink variants are darker (light mode) / brighter (dark mode) versions that pass
+  WCAG AA (4.5:1) as text on both surface and subtle.
+*/
+@layer base {
+  :root {
+    color-scheme: light;
+    --ink: 15 23 42;            /* #0F172A main text */
+    --muted: 91 107 128;        /* #5B6B80 secondary text (brief: #64748B, darkened a touch so it passes AA on subtle panels) */
+    --surface: 255 255 255;     /* #FFFFFF page and cards */
+    --subtle: 241 245 249;      /* #F1F5F9 panels */
+    --border: 226 232 240;      /* #E2E8F0 lines and card edges */
+    --primary: 47 111 222;      /* #2F6FDE steel blue: main series, buttons */
+    --primary-fg: 255 255 255;  /* text on primary buttons (4.7:1) */
+    --primary-ink: 36 89 194;   /* #2459C2 primary as text/links */
+    --accent: 232 131 58;       /* #E8833A safety orange: second series, highlights */
+    --accent-ink: 176 83 26;    /* #B0531A accent as text */
+    --status-good: 46 158 106;  /* #2E9E6A + check icon */
+    --status-watch: 201 154 6;  /* #C99A06 + eye icon */
+    --status-risk: 232 131 58;  /* #E8833A + warning icon */
+    --status-late: 214 69 69;   /* #D64545 + clock icon */
+    --status-good-ink: 30 122 80;
+    --status-watch-ink: 134 101 0;
+    --status-risk-ink: 176 83 26;
+    --status-late-ink: 179 47 47;
+    --grid: 226 232 240;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --ink: 226 232 240;
+    --muted: 148 163 184;
+    --surface: 11 18 32;
+    --subtle: 19 28 46;
+    --border: 36 48 68;
+    --primary: 107 155 242;
+    --primary-fg: 11 18 32;
+    --primary-ink: 125 168 245;
+    --accent: 240 153 90;
+    --accent-ink: 240 153 90;
+    --status-good: 63 191 133;
+    --status-watch: 224 177 28;
+    --status-risk: 240 153 90;
+    --status-late: 239 107 107;
+    --status-good-ink: 63 191 133;
+    --status-watch-ink: 224 177 28;
+    --status-risk-ink: 240 153 90;
+    --status-late-ink: 239 107 107;
+    --grid: 36 48 68;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface text-ink font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--primary));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  code, kbd, pre, .num {
+    @apply font-mono;
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-border bg-surface shadow-card;
+  }
+  .panel {
+    @apply rounded-card bg-subtle;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-primary-fg hover:bg-primary/90;
+  }
+  .btn-secondary {
+    @apply btn border border-border bg-surface text-ink hover:bg-subtle;
+  }
+  .link {
+    @apply font-medium text-primary-ink underline-offset-4 hover:underline;
+  }
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wider text-muted;
+  }
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
