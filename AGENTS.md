@@ -1,5 +1,13 @@
 # SiteSupply: project brief for the coding agent
 
+> ## Direction update, 19 Oct 2026 (overrides the brief below where they conflict)
+> Lakshay reviewed Session 1 and changed direction. Follow this section first.
+> - **Product, not portfolio.** The public site presents SiteSupply as a product. No "Sample data" pills and no "PM workspace" labels in the UI. The footer carries one plain disclosure: a concept product whose console runs on a simulated order history. Never present the numbers as a real customer's results; the "What it catches" stat strip says it was measured on a 25-week simulation. The sample-data story is for interviews, the README and `docs/`.
+> - **Design system:** dark, product-first, adapted from the Linear DESIGN.md in VoltAgent/awesome-claude-design (MIT). Tokens and rules live in `docs/DESIGN.md` and `src/styles/index.css`. No light mode.
+> - **Information architecture:** `/` is the product landing page (hero is the live board replaying a real morning). The product is the **console** at `/console` (live board, `/console/order/:id`, `/console/alerts`, `/console/site` phone view, `/console/ask`). Old `/demo` links redirect. The status logic below is implemented in `src/lib/live.ts` with tests.
+> - **AI is allowed** (supersedes "no backend"): "Ask SiteSupply" turns questions into read-only SQL run in the browser and writes a short answer; alerts can draft a message to the vendor. In production it calls Groq through the Vercel function `api/ai.js` (key in `GROQ_API_KEY`, never committed; see `.env.example`). In a Claude artifact preview it uses the viewer's Claude. With neither, preset questions still run offline.
+> - Not yet rebuilt in the new style: vendor scorecard, dashboard, insights, stats lab, docs and method pages. Build them as product pages (for example "Vendors" and "Analytics" inside the console) before linking them anywhere.
+
 You are building **SiteSupply**, the flagship product-management portfolio project of Lakshay Malik (GitHub: Lakshayx007).
 SiteSupply is a delivery-delay early-warning product for construction material orders (cement, TMT steel, ready-mix concrete,
 aggregate, M-sand). The website has two halves:

@@ -1,49 +1,34 @@
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ExternalLink, Menu, X } from "lucide-react";
 import { useEffect, useState, type MouseEvent } from "react";
-import { NavLink, useLocation, useOutlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { SITE } from "../config";
 import { useDb } from "../db/DbProvider";
 import { Logo } from "./Logo";
-import { SampleDataPill } from "./SampleDataPill";
-import { ThemeToggle } from "./ThemeToggle";
 
-const DEMO = [{ to: "/demo", label: "Demo" }];
-const PM = [
-  { to: "/vendors", label: "Vendors" },
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/insights", label: "Insights" },
-  { to: "/stats-lab", label: "Stats Lab" },
-  { to: "/docs", label: "Docs" },
-  { to: "/method", label: "Method" },
-];
-
-/** Desktop nav link with a shared sliding highlight. */
-function NavItem({ to, label }: { to: string; label: string }) {
-  return (
-    <NavLink to={to} className="relative rounded-lg px-3 py-2 text-sm font-medium">
-      {({ isActive }) => (
-        <>
-          {isActive && (
-            <motion.span
-              layoutId="nav-active"
-              className="absolute inset-0 rounded-lg bg-subtle ring-1 ring-border"
-              transition={{ type: "spring", stiffness: 420, damping: 34 }}
-            />
-          )}
-          <span className={`relative transition-colors ${isActive ? "text-ink" : "text-muted hover:text-ink"}`}>{label}</span>
-        </>
-      )}
-    </NavLink>
-  );
+/** Scrolls to a section on the home page, navigating there first if needed. */
+export function useScrollTo() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  return (id: string) => {
+    const go = () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (pathname !== "/") {
+      navigate("/");
+      setTimeout(go, 80);
+    } else go();
+  };
 }
 
-const mobileLink = ({ isActive }: { isActive: boolean }) =>
-  `rounded-lg px-3 py-2.5 text-base font-medium ${isActive ? "bg-subtle text-ink" : "text-muted hover:bg-subtle hover:text-ink"}`;
+const LINKS = [
+  { id: "product", label: "Product" },
+  { id: "how", label: "How it works" },
+  { id: "ask", label: "AI assistant" },
+];
 
 function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const scrollTo = useScrollTo();
   const { pathname } = useLocation();
 
   useEffect(() => setOpen(false), [pathname]);
@@ -56,31 +41,29 @@ function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-40 transition-[background-color,border-color,box-shadow] duration-300 ${
-        scrolled || open
-          ? "border-b border-border bg-surface/85 shadow-[0_1px_0_rgb(15_23_42/0.02)] backdrop-blur-md supports-[backdrop-filter]:bg-surface/70"
-          : "border-b border-transparent bg-transparent"
+      className={`sticky top-0 z-40 transition-colors duration-300 ${
+        scrolled || open ? "border-b border-line bg-canvas/80 backdrop-blur-xl" : "border-b border-transparent"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-page items-center gap-3 px-4 sm:px-6">
+      <div className="mx-auto flex h-14 max-w-page items-center gap-6 px-4 sm:px-6">
         <Logo />
-        <SampleDataPill className="ml-1" />
-
-        <nav aria-label="Main" className="ml-auto hidden items-center gap-0.5 lg:flex">
-          {DEMO.map((l) => (
-            <NavItem key={l.to} {...l} />
-          ))}
-          <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
-          {PM.map((l) => (
-            <NavItem key={l.to} {...l} />
+        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+          {LINKS.map((l) => (
+            <button key={l.id} onClick={() => scrollTo(l.id)} className="rounded-md px-3 py-1.5 text-sm text-ink-2 transition-colors hover:text-ink">
+              {l.label}
+            </button>
           ))}
         </nav>
-
-        <div className="ml-auto flex items-center gap-2 lg:ml-3">
-          <ThemeToggle />
+        <div className="ml-auto flex items-center gap-2">
+          <Link to="/console/ask" className="btn-ghost hidden min-h-[34px] px-3 sm:inline-flex">
+            Ask the data
+          </Link>
+          <Link to="/console" className="btn-primary min-h-[34px] px-3.5">
+            Open console
+          </Link>
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border text-ink hover:bg-subtle lg:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink-2 hover:bg-raised md:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             aria-controls="mobile-nav"
@@ -90,7 +73,6 @@ function Header() {
           </button>
         </div>
       </div>
-
       <AnimatePresence>
         {open && (
           <motion.nav
@@ -99,22 +81,25 @@ function Header() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-            className="overflow-hidden border-t border-border bg-surface lg:hidden"
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden md:hidden"
           >
-            <div className="px-4 pb-5 pt-3">
-              <p className="eyebrow px-3 pb-1">Product demo</p>
-              <NavLink to="/demo" className={mobileLink}>
-                Orders, detail and alerts
-              </NavLink>
-              <p className="eyebrow px-3 pb-1 pt-4">PM workspace</p>
-              <div className="flex flex-col">
-                {PM.map((l) => (
-                  <NavLink key={l.to} to={l.to} className={mobileLink}>
-                    {l.label}
-                  </NavLink>
-                ))}
-              </div>
+            <div className="flex flex-col px-4 pb-4">
+              {LINKS.map((l) => (
+                <button
+                  key={l.id}
+                  onClick={() => {
+                    setOpen(false);
+                    scrollTo(l.id);
+                  }}
+                  className="rounded-md px-2 py-3 text-left text-base text-ink-2 hover:text-ink"
+                >
+                  {l.label}
+                </button>
+              ))}
+              <Link to="/console/ask" className="rounded-md px-2 py-3 text-base text-ink-2 hover:text-ink">
+                Ask the data
+              </Link>
             </div>
           </motion.nav>
         )}
@@ -124,54 +109,41 @@ function Header() {
 }
 
 function Footer() {
+  const scrollTo = useScrollTo();
   return (
-    <footer className="mt-24 border-t border-border sm:mt-32">
-      <div className="mx-auto grid max-w-page gap-10 px-4 py-12 sm:px-6 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="max-w-xl space-y-4">
+    <footer className="border-t border-line">
+      <div className="mx-auto grid max-w-page gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
+        <div className="space-y-3">
           <Logo />
-          <p className="text-sm leading-relaxed text-muted">
-            <strong className="font-semibold text-ink">All data on this site is sample data.</strong> It was generated by a
-            program (<code className="text-[13px]">scripts/make_sample_data.py</code>, seed 42) for {SITE.dataWindow}, with
-            some patterns planted on purpose. It does not describe any real company, vendor or customer.
-          </p>
-          <p className="text-sm text-muted">A product-management portfolio project by {SITE.author}.</p>
+          <p className="max-w-sm text-sm text-muted">Delivery-delay early warning for construction material orders.</p>
         </div>
-        <div className="grid grid-cols-2 gap-6 text-sm">
-          <div>
-            <p className="font-semibold">Product</p>
-            <ul className="mt-3 space-y-2 text-muted">
-              <li>
-                <NavLink to="/demo" className="hover:text-ink">
-                  Demo
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/method" className="hover:text-ink">
-                  How the data was made
-                </NavLink>
-              </li>
-              <li>
-                <a href={SITE.githubUrl} className="inline-flex items-center gap-1 hover:text-ink" target="_blank" rel="noreferrer">
-                  GitHub
-                  <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
-                  <span className="sr-only">(opens in a new tab)</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="font-semibold">PM workspace</p>
-            <ul className="mt-3 space-y-2 text-muted">
-              {PM.slice(0, 5).map((l) => (
-                <li key={l.to}>
-                  <NavLink to={l.to} className="hover:text-ink">
-                    {l.label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div>
+          <p className="text-sm font-medium text-ink">Product</p>
+          <ul className="mt-3 space-y-2 text-sm text-muted">
+            <li><NavLink to="/console" className="hover:text-ink">Live console</NavLink></li>
+            <li><NavLink to="/console/alerts" className="hover:text-ink">Alerts</NavLink></li>
+            <li><NavLink to="/console/site" className="hover:text-ink">Site engineer view</NavLink></li>
+            <li><NavLink to="/console/ask" className="hover:text-ink">Ask SiteSupply</NavLink></li>
+          </ul>
         </div>
+        <div>
+          <p className="text-sm font-medium text-ink">About</p>
+          <ul className="mt-3 space-y-2 text-sm text-muted">
+            <li><button onClick={() => scrollTo("how")} className="hover:text-ink">How the score works</button></li>
+            <li>
+              <a href={SITE.githubUrl} className="inline-flex items-center gap-1 hover:text-ink" target="_blank" rel="noreferrer">
+                GitHub
+                <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div className="mx-auto max-w-page px-4 pb-10 sm:px-6">
+        <p className="border-t border-line pt-6 text-xs text-muted">
+          A concept product by {SITE.author}. The console runs on a simulated order history, not on a real customer's data.
+        </p>
       </div>
     </footer>
   );
@@ -181,10 +153,8 @@ function DbStatusBanner() {
   const { status, error } = useDb();
   if (status !== "error") return null;
   return (
-    <div role="alert" className="border-b border-status-late/40 bg-status-late/10 px-4 py-3 text-sm text-status-late-ink">
-      <div className="mx-auto max-w-page sm:px-2">
-        The sample database could not be loaded: {error.message} Refresh the page to try again.
-      </div>
+    <div role="alert" className="border-b border-late/40 bg-late/10 px-4 py-3 text-sm text-late">
+      <div className="mx-auto max-w-page">Order data could not be loaded: {error.message} Refresh the page to try again.</div>
     </div>
   );
 }
@@ -196,13 +166,9 @@ function skipToMain(e: MouseEvent<HTMLAnchorElement>) {
 
 export function Layout() {
   const { pathname } = useLocation();
-  const outlet = useOutlet();
-  const reduce = useReducedMotion();
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
-
   return (
     <div className="flex min-h-screen flex-col">
       {/* HashRouter owns the URL hash, so the skip link moves focus instead of changing the hash. */}
@@ -212,14 +178,7 @@ export function Layout() {
       <Header />
       <DbStatusBanner />
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
-        <motion.div
-          key={pathname}
-          initial={reduce ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-        >
-          {outlet}
-        </motion.div>
+        <Outlet />
       </main>
       <Footer />
     </div>

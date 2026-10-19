@@ -1,38 +1,51 @@
-import { HashRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { ToastProvider } from "./components/ui";
+import { Board } from "./console/Board";
+import { ConsoleProvider } from "./console/ConsoleContext";
+import { ConsoleLayout } from "./console/ConsoleLayout";
+import { AlertsView, AskView, SiteView } from "./console/Views";
 import { DbProvider } from "./db/DbProvider";
-import Dashboard from "./pages/Dashboard";
-import DemoAlert from "./pages/DemoAlert";
-import DemoOrderDetail from "./pages/DemoOrderDetail";
-import DemoOrders from "./pages/DemoOrders";
-import Docs from "./pages/Docs";
 import Home from "./pages/Home";
-import Insights from "./pages/Insights";
-import Method from "./pages/Method";
 import NotFound from "./pages/NotFound";
-import StatsLab from "./pages/StatsLab";
-import Vendors from "./pages/Vendors";
+
+/** Old /demo links from the build plan still work. */
+function DemoRedirect() {
+  const { id } = useParams();
+  return <Navigate to={id ? `/console/order/${id}` : "/console"} replace />;
+}
 
 export default function App() {
   return (
     <DbProvider>
-      <HashRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="demo" element={<DemoOrders />} />
-            <Route path="demo/order/:id" element={<DemoOrderDetail />} />
-            <Route path="demo/alert/:id" element={<DemoAlert />} />
-            <Route path="vendors" element={<Vendors />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="insights" element={<Insights />} />
-            <Route path="stats-lab" element={<StatsLab />} />
-            <Route path="docs" element={<Docs />} />
-            <Route path="method" element={<Method />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </HashRouter>
+      <ToastProvider>
+        <HashRouter>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+            <Route
+              path="console"
+              element={
+                <ConsoleProvider>
+                  <ConsoleLayout />
+                </ConsoleProvider>
+              }
+            >
+              <Route index element={<Board />} />
+              <Route path="order/:id" element={<Board />} />
+              <Route path="alert/:id" element={<Board />} />
+              <Route path="alerts" element={<AlertsView />} />
+              <Route path="site" element={<SiteView />} />
+              <Route path="ask" element={<AskView />} />
+            </Route>
+            <Route path="demo" element={<DemoRedirect />} />
+            <Route path="demo/order/:id" element={<DemoRedirect />} />
+            <Route path="demo/alert/:id" element={<DemoRedirect />} />
+          </Routes>
+        </HashRouter>
+      </ToastProvider>
     </DbProvider>
   );
 }
