@@ -1,0 +1,4 @@
+# Binary files: never convert line endings.
+*.wasm binary
+*.sqlite binary
+*.png binary
