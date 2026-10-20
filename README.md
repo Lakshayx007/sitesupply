@@ -14,7 +14,7 @@ Construction sites lose whole days when cement, steel or ready-mix concrete arri
 
 | Page | What it does |
 |---|---|
-| **Landing page** (`/`) | The live board replays a real morning from the data: orders flip to *At risk* as the dispatch check runs, and the alert opens with its reasons. |
+| **Landing page** (`/`) | The live board replays a morning from the simulated data: orders flip to *At risk* as the dispatch check runs, and the alert opens with its reasons. |
 | **Live board** (`/console`) | Every open order with status and a 0–100 risk badge, filters, and a replay clock over the 25 weeks (play, speed, *Next alert*). |
 | **Order detail and alert** (`/console/order/:id`) | Timeline, promised vs actual, the vendor's last 10 deliveries, why the score is what it is, and the alert with actions, a backup vendor and an AI-drafted message to the vendor. |
 | **Site engineer view** (`/console/site`) | The same product in a 390×844 phone frame, for the site with the most orders. |

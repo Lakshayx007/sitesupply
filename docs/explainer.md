@@ -3,6 +3,8 @@ title: "SiteSupply: Project Explainer"
 subtitle: "A delivery-delay early-warning product for construction material orders. Flagship product management project by Lakshay Malik"
 ---
 
+> **Read this first.** This explainer is the original analysis, written before the alert rule changed. Its alert numbers (83% of late orders caught, 56% of alerts right, about 17 alerts a week, a 2.5-hour median warning) are for the **score-alone rule** (score of 50+). The product now alerts only when the score is 50+ **and** the truck is late leaving: on the same simulated data that gives 77% caught, 75% right, 11.6 alerts a week and a 2.3-hour median warning (see insight 9 on the case-study page, `docs/prd.md` and `docs/metrics.md`). All order data is simulated; the company figures in sections 2 and 9 are public figures quoted for context only.
+
 # In one paragraph
 
 SiteSupply is a product that warns a construction site **before** a material delivery turns up late, so the site team can act instead of waiting. It watches every order of cement, steel, ready-mix concrete, sand and aggregate. When an order looks risky, it says why in plain words and suggests what to do: call the vendor, switch to a backup vendor, or move the crew to other work. The project is built the way a product manager would build it. It has a problem story, user types, a PRD with user stories, a working website, a metrics dashboard, and a statistics section that explains every number.
