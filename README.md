@@ -4,7 +4,7 @@
 
 Construction sites lose whole days when cement, steel or ready-mix concrete arrives late, and today the site team finds out only when the truck doesn't come. SiteSupply scores every material order for delay risk with simple rules anyone can check, and warns the site engineer hours before the promised time, with the reasons in plain words and three next steps: call the vendor, switch to a backup vendor, or move the crew to other work.
 
-**Live:** _add your Vercel link here_ · **Install on Android:** open the link in Chrome and tap *Install app*
+**Live:** [sitesupply-plum.vercel.app](https://sitesupply-plum.vercel.app/) · **Install on Android:** open the link in Chrome and tap *Install app*
 
 ![The SiteSupply landing page, with the live board replaying a morning](docs/screenshots/home.png)
 
