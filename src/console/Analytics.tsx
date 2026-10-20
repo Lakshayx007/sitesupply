@@ -2,13 +2,15 @@ import { useMemo } from "react";
 import { ChartCard } from "../components/charts/ChartCard";
 import { base, tok } from "../components/charts/echarts";
 import { useQuery } from "../db/useQuery";
+import { useAlertRule, type AlertRule } from "../lib/alertRule";
 import { mean, median, pchartLimits, percentile } from "../lib/stats";
 
 /* Every query below is the one shown in its "Show SQL" drawer (from docs/metrics.md). */
 
 const Q = {
-  rates: `SELECT ROUND(AVG(otif), 3) AS otif, ROUND(AVG(on_time), 3) AS on_time, ROUND(AVG(in_full), 3) AS in_full,
-       COUNT(*) AS delivered, ROUND(SUM(alert) / 25.0, 1) AS alerts_per_week
+  // Alerts follow the rule chosen on Alert tuning (default: score 50+ and the truck late leaving).
+  rates: (rule: AlertRule) => `SELECT ROUND(AVG(otif), 3) AS otif, ROUND(AVG(on_time), 3) AS on_time, ROUND(AVG(in_full), 3) AS in_full,
+       COUNT(*) AS delivered, ROUND(SUM(${rule === "dispatch" ? "risk_score >= 50 AND pts_dispatch_late > 0" : "risk_score >= 50"}) / 25.0, 1) AS alerts_per_week
 FROM orders WHERE cancelled = 0`,
   delays: `SELECT delay_hours FROM orders WHERE cancelled = 0 AND on_time = 0`,
   weekly: `SELECT CAST((julianday(substr(promised_ts, 1, 10)) - julianday('2026-04-06')) / 7 AS INT) + 1 AS week,
@@ -42,7 +44,8 @@ function Kpi({ label, value, note }: { label: string; value: string; note: strin
 }
 
 export function Analytics() {
-  const rates = useQuery<{ otif: number; on_time: number; in_full: number; delivered: number; alerts_per_week: number }>(Q.rates).rows[0];
+  const rule = useAlertRule();
+  const rates = useQuery<{ otif: number; on_time: number; in_full: number; delivered: number; alerts_per_week: number }>(Q.rates(rule)).rows[0];
   const delayRows = useQuery<{ delay_hours: number }>(Q.delays).rows;
   const delays = useMemo(() => delayRows.map((r) => r.delay_hours), [delayRows]);
   const weekly = useQuery<{ week: number; n: number; otif: number; monsoon: number }>(Q.weekly).rows;
@@ -262,7 +265,7 @@ export function Analytics() {
           <Kpi label="In full" value={pct(rates?.in_full)} note="Full quantity delivered" />
           <Kpi label="Median delay" value={delays.length ? `${d.median.toFixed(1)} h` : "–"} note={`Typical late order (${delays.length})`} />
           <Kpi label="90th-percentile delay" value={delays.length ? `${d.p90.toFixed(1)} h` : "–"} note="1 in 10 late orders is worse" />
-          <Kpi label="Alerts per week" value={rates ? String(rates.alerts_per_week) : "–"} note="At the alert threshold of 50" />
+          <Kpi label="Alerts per week" value={rates ? String(rates.alerts_per_week) : "–"} note={rule === "dispatch" ? "Score 50+ and truck late leaving" : "Score 50+ (score-alone rule)"} />
         </dl>
 
         <ChartCard

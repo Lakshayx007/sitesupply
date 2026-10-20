@@ -1,6 +1,6 @@
 # Roadmap
 
-The roadmap follows one finding from the sample data: **dispatch alerts are accurate but give only about 2.5 hours of warning, and about 20% of late orders leave the plant on time and get stuck on the road.** So v1 ships what is accurate now, and v2 adds the signal the dispatch check can't see.
+The roadmap follows one finding from the sample data: **dispatch alerts are accurate but give only about 2.3 hours of warning (2.5 with the score-alone rule), and about 20% of late orders leave the plant on time and get stuck on the road.** So v1 ships what is accurate now, and v2 adds the signal the dispatch check can't see.
 
 ## MVP (now)
 - **Delay alert at dispatch:** risk score with reasons, three actions.

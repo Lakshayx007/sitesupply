@@ -35,6 +35,17 @@ FROM orders WHERE cancelled = 0 GROUP BY monsoon;               -- late 0.297 vs
 
 ## Alert precision and recall at a threshold
 Replace `50` with the chosen threshold.
+
+Current rule (since 19 Oct 2026): a score of 50+ **and** the truck late leaving.
+```sql
+SELECT SUM(risk_score >= 50 AND pts_dispatch_late > 0) AS alerts,
+       ROUND(1.0 * SUM(risk_score >= 50 AND pts_dispatch_late > 0 AND on_time = 0) / SUM(risk_score >= 50 AND pts_dispatch_late > 0), 3) AS precision,
+       ROUND(1.0 * SUM(risk_score >= 50 AND pts_dispatch_late > 0 AND on_time = 0) / SUM(on_time = 0), 3) AS recall,
+       ROUND(SUM(risk_score >= 50 AND pts_dispatch_late > 0) / 25.0, 1) AS alerts_per_week
+FROM orders WHERE cancelled = 0;                                 -- 290 | 0.748 | 0.767 | 11.6
+```
+
+Score-alone rule (the original analysis; the `alert` column):
 ```sql
 SELECT SUM(risk_score >= 50) AS alerts,
        ROUND(1.0 * SUM(risk_score >= 50 AND on_time = 0) / SUM(risk_score >= 50), 3) AS precision,
@@ -44,9 +55,9 @@ FROM orders WHERE cancelled = 0;                                 -- 423 | 0.556 
 ```
 
 ## Warning lead time (hours)
-The median is computed in TypeScript from these rows. Expected: median 2.5 h.
+The median is computed in TypeScript from these rows. Expected: median 2.3 h with the current rule, 2.5 h with the score-alone rule (`alert = 1`).
 ```sql
-SELECT alert_lead_hours FROM orders WHERE cancelled = 0 AND alert = 1;
+SELECT alert_lead_hours FROM orders WHERE cancelled = 0 AND risk_score >= 50 AND pts_dispatch_late > 0;
 ```
 
 ## Funnel (cohort: enquiries from 6 Apr to 12 Jul 2026)

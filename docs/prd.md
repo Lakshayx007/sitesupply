@@ -52,10 +52,13 @@ See [user_stories.md](user_stories.md) for all eight stories with Given / When /
 | Metric | Type | Sample-data baseline |
 |---|---|---|
 | OTIF rate | Outcome | 70.0% |
-| Warning lead time (median) | Feature | 2.5 h at the dispatch check |
-| Alert precision | Feature | 55.6% at threshold 50 |
-| Alert recall | Feature | 83.0% at threshold 50 |
+| Warning lead time (median) | Feature | 2.3 h at the dispatch check (2.5 h with the score-alone rule) |
+| Alert precision | Feature | 74.8% with the current rule (55.6% with the score-alone rule) |
+| Alert recall | Feature | 76.7% with the current rule (83.0% with the score-alone rule) |
+| Alerts per week | Guardrail | 11.6 with the current rule (16.9 with the score-alone rule) |
 | % of alerts acted on | Adoption | Needs product logging |
+
+The current rule is a score of 50+ **and** the truck late leaving; the score-alone rule is a score of 50+.
 
 **Guardrails** (must not get worse): vendor acceptance rate, cost per order, alerts per user per week (alert fatigue).
 

@@ -122,7 +122,7 @@ const METHODS = [
   { t: "Shrinkage (empirical Bayes)", what: "Pull small-sample scores toward the average, in proportion to how little data there is.", here: "Vendor L's 67% becomes about 68%; Vendor G's 57% on 205 orders hardly moves.", say: "Shrinkage stops a new vendor with three lucky orders from topping the leaderboard." },
   { t: "Comparing two groups (chi-square)", what: "Checks whether a gap between groups is bigger than chance would produce.", here: "Late rate 29.7% in the monsoon against 16.5% in the dry season; p < 0.001; the gap is 8 to 18 points.", say: "The monsoon effect is real, not noise, and I quote it as a range." },
   { t: "Logistic regression and odds ratios", what: "Estimates how much each factor changes the odds of being late, holding the others fixed.", here: "Monsoon about 2×, rush 1.7×, long distance 1.6×, poor vendor record 1.5×. Ready-mix's small effect was not clear.", say: "I used the regression to check the score's rules point the right way, and which matter most." },
-  { t: "Precision and recall", what: "Of the alerts sent, how many were right; of the late orders, how many were warned about.", here: "56% precision and 83% recall at threshold 50.", say: "I picked the threshold from the cost of a missed delay versus a false alarm." },
+  { t: "Precision and recall", what: "Of the alerts sent, how many were right; of the late orders, how many were warned about.", here: "With the current rule (score 50+ and truck late leaving): 75% precision and 77% recall. With the score-alone rule at 50: 56% and 83%.", say: "I picked the threshold from the cost of a missed delay versus a false alarm, then tightened the rule where the false alarms came from." },
   { t: "Sample size and power", what: "How many orders an experiment needs to reliably see an effect of a given size.", here: "1,089 orders per group to detect a 5-point gain from a 75% base.", say: "A classic A/B test was too slow, so I chose a staggered rollout." },
   { t: "Funnel conversion and cohorts", what: "How many reach each step, for a group that started in the same period.", here: "Enquiries from 6 Apr to 12 Jul, so every later step had time to happen.", say: "A fixed cohort stops recent enquiries that haven't had time to convert from dragging the funnel down." },
 ];
@@ -188,7 +188,8 @@ export default function CaseStudy() {
       const g = scores.filter((r) => r.dispatch_late === v);
       return g.filter((r) => r.on_time === 0).length / g.length;
     };
-    return { scoreOnly, withTruck, fpNoDispatch, lateIfOut: lateIf(1), lateIfOnTime: lateIf(0) };
+    const withTruckLead = median(scores.filter((r) => r.risk_score >= 50 && r.pts_dispatch_late > 0).map((r) => r.alert_lead_hours ?? NaN));
+    return { scoreOnly, withTruck, withTruckLead, fpNoDispatch, lateIfOut: lateIf(1), lateIfOnTime: lateIf(0) };
   }, [scores, late]);
   const delays = useMemo(() => delayRows.map((r) => r.delay_hours), [delayRows]);
   const d = useMemo(() => ({ med: median(delays), avg: mean(delays), p90: percentile(delays, 90) }), [delays]);
@@ -395,7 +396,7 @@ export default function CaseStudy() {
               <Insight
                 n={4}
                 title="The alert threshold is a product decision, not a technical one"
-                see={<>At the chosen threshold of 50, alerts catch {pct(at(50)?.recall, 0)} of late orders and {pct(at(50)?.precision, 0)} of alerts turn out right, about 17 a week. At 55, alerts are right {pct(at(55)?.precision, 0)} of the time but catch only {pct(at(55)?.recall, 0)}.</>}
+                see={<>At the chosen threshold of 50, alerts catch {pct(at(50)?.recall, 0)} of late orders and {pct(at(50)?.precision, 0)} of alerts turn out right, about {Math.round(((at(50)?.tp ?? 0) + (at(50)?.fp ?? 0)) / 25)} a week (score-alone rule; insight 9 tightens it). At 55, alerts are right {pct(at(55)?.precision, 0)} of the time but catch only {pct(at(55)?.recall, 0)}.</>}
                 means="A false alarm costs one phone call. A missed delay can cost a crew-day and a wasted load of concrete."
                 decision="Keep the threshold at 50. Watch % of alerts acted on: if people start ignoring alerts, that is alert fatigue, and the threshold should go up."
                 chart={
@@ -414,7 +415,7 @@ export default function CaseStudy() {
               <Insight
                 n={5}
                 title="Dispatch alerts come late; early warnings come early but are often wrong"
-                see={stages ? <>The dispatch alert gives a median of {stages.dispLead.toFixed(1)} hours' warning and is right {pct(stages.disp.precision, 0)} of the time. The early watch at order time gives about {Math.round(stages.earlyLead)} hours but is right only {pct(stages.early.precision, 0)} of the time, against a 25% base late rate. And 20% of late orders leave on time and get stuck on the road.</> : "–"}
+                see={stages ? <>The dispatch alert gives a median of {stages.dispLead.toFixed(1)} hours' warning and is right {pct(stages.disp.precision, 0)} of the time. The early watch at order time gives about {Math.round(stages.earlyLead)} hours but is right only {pct(stages.early.precision, 0)} of the time, against a 25% base late rate. And 20% of late orders leave on time and get stuck on the road. (These are for the score-alone rule. With the late-truck rule from insight 9, the alert gives {rules ? rules.withTruckLead.toFixed(1) : "–"} hours and is right {pct(rules?.withTruck.precision, 0)} of the time.)</> : "–"}
                 means="Accuracy and warning time pull against each other, and the dispatch check is blind to delays on the road."
                 decision="This sets the roadmap. v1 ships the dispatch alert. v2 adds live GPS tracking. The early watch is used softly, as a 'keep an eye on this' label, not a loud alert."
                 chart={

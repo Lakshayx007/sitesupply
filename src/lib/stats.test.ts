@@ -94,11 +94,15 @@ describe("percentile", () => {
   it("ignores missing values", () => {
     expect(percentile([1, NaN, 3], 50)).toBe(2);
   });
-  it("reproduces the alert lead-time median of 2.5 h", () => {
+  it("reproduces the score-alone alert lead-time median of 2.5 h", () => {
     const lead = column("SELECT alert_lead_hours FROM orders WHERE cancelled = 0 AND alert = 1");
     close(median(lead), summary.alert_at_50.lead_median_h, 0.05);
     close(percentile(lead, 25), summary.alert_at_50.lead_p25_h, 0.05);
     close(percentile(lead, 75), summary.alert_at_50.lead_p75_h, 0.05);
+  });
+  it("gives a median lead of about 2.3 h with the current rule (score 50+ and truck late)", () => {
+    const lead = column("SELECT alert_lead_hours FROM orders WHERE cancelled = 0 AND risk_score >= 50 AND pts_dispatch_late > 0");
+    close(median(lead), 2.29, 0.01);
   });
 });
 
