@@ -1,10 +1,10 @@
 import { BellOff, ChevronLeft, ChevronRight, TriangleAlert } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AskPanel } from "../components/ask/AskPanel";
 import { PhoneFrame } from "../components/PhoneFrame";
 import { RiskBadge, StatusChip } from "../components/ui";
-import { alertSent, isPlaced, liveScore, liveStatus, ts, type LiveOrder } from "../lib/live";
+import { alertMoment, alertSent, isPlaced, liveScore, liveStatus, ts, type LiveOrder } from "../lib/live";
 import { dayMonth, hhmm, reasonsFor, unitLabel } from "../lib/orders";
 import { useConsole } from "./ConsoleContext";
 import { fmtClock } from "./ConsoleLayout";
@@ -73,7 +73,7 @@ export function AlertsView() {
 /* ---------------- Site engineer view (phone) ---------------- */
 
 export function SiteView() {
-  const { orders, now } = useConsole();
+  const { orders, now, setNow, rule } = useConsole();
   // The demo customer is the one with the most orders (CLAUDE.md).
   const sites = useMemo(() => {
     const m = new Map<string, { id: string; name: string; n: number }>();
@@ -98,6 +98,17 @@ export function SiteView() {
     [orders, current, now],
   );
   const upcoming = list.filter((o) => !liveStatus(o, now).startsWith("delivered"));
+
+  // Open each site on a live alert: if nothing on the way is at risk right now, move the replay
+  // clock to the site's latest alert. Runs when the view opens and when another site is picked.
+  const jumped = useRef<string | null>(null);
+  useEffect(() => {
+    if (!current || !orders.length || jumped.current === current) return;
+    jumped.current = current;
+    if (upcoming.some((o) => liveStatus(o, now) === "at-risk")) return;
+    const at = alertMoment(orders, current, rule);
+    if (at !== null) setNow(at);
+  }, [current, orders.length]);
   const past = list.filter((o) => liveStatus(o, now).startsWith("delivered"));
   const { time } = fmtClock(now);
 

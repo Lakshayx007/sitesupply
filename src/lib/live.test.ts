@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import initSqlJs, { type Database } from "sql.js";
 import { beforeAll, describe, expect, it } from "vitest";
-import { LIVE_COLUMNS, alertSent, earlyScore, liveScore, liveStatus, ts, type LiveOrder } from "./live";
+import { LIVE_COLUMNS, alertMoment, alertSent, earlyScore, fromMin, isDelivered, isPlaced, liveScore, liveStatus, ts, type LiveOrder } from "./live";
 
 let db: Database;
 let orders: LiveOrder[];
@@ -57,5 +57,12 @@ describe("liveStatus follows the CLAUDE.md status logic", () => {
     const o = live.find((x) => x.risk_score >= 50 && x.pts_dispatch_late === 0)!;
     const mid = ts(o.check_ts) + 1;
     if (mid < ts(o.promised_ts) && (!o.delivered_ts || mid < ts(o.delivered_ts))) expect(liveStatus(o, mid, "dispatch")).toBe("watch");
+  });
+
+  it("opens the busiest site's phone view on an at-risk delivery that is on the way", () => {
+    const at = alertMoment(orders, "C207", "dispatch")!;
+    const upcoming = orders.filter((o) => o.customer_id === "C207" && isPlaced(o, at) && !isDelivered(o, at));
+    expect(upcoming.some((o) => liveStatus(o, at, "dispatch") === "at-risk")).toBe(true);
+    expect(fromMin(at)).toBe("2026-06-17 11:08");
   });
 });

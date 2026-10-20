@@ -111,3 +111,16 @@ export const STATUS_RANK: Record<LiveStatus, number> = {
 export const WINDOW = { start: ts("2026-04-06 00:00"), end: ts("2026-09-28 00:00") };
 /** Default "now": just after a ready-mix alert fires, so the board opens with something to act on. */
 export const DEFAULT_NOW = ts("2026-09-26 06:00");
+
+/**
+ * The moment to open a site on: shortly after the dispatch check of its latest alert that turned out
+ * right (the delivery really was late), so the phone opens on an at-risk delivery still on the way.
+ */
+export function alertMoment(orders: LiveOrder[], site: string, rule: AlertRule = getAlertRule()): number | null {
+  const alerted = orders.filter((o) => o.customer_id === site && o.cancelled === 0 && isAlert(o, rule));
+  const late = alerted.filter((o) => o.on_time === 0);
+  const pick = (late.length ? late : alerted).sort((a, b) => ts(b.check_ts) - ts(a.check_ts))[0];
+  if (!pick) return null;
+  const at = ts(pick.check_ts) + 15;
+  return pick.delivered_ts && ts(pick.delivered_ts) <= at ? ts(pick.check_ts) : at;
+}
