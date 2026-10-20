@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { RiskBadge, StatusChip, useToast } from "../components/ui";
-import { templateVendorMessage, vendorMessagePrompt } from "../lib/ask";
+import { templateVendorMessage } from "../lib/ask";
 import { ALERT_AT, alertSent, earlyScore, fromMin, liveScore, liveStatus, ts, type LiveOrder } from "../lib/live";
 import { backupVendor, dayMonth, hhmm, reasonsFor, unitLabel } from "../lib/orders";
 import { useAi } from "../lib/useAi";
@@ -181,8 +181,7 @@ function AlertCard({
     setDrafting(true);
     setDraft("");
     try {
-      const text = await ai.text(vendorMessagePrompt({ ...facts, reasons: reasonPts.map((r) => r.sentence) }), {
-        quick: true,
+      const text = await ai.text("vendor", { ...facts, reasons: reasonPts.map((r) => r.sentence) }, {
         onText: (t) => setDraft(t),
       });
       setDraft(text.trim());

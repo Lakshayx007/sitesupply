@@ -40,7 +40,7 @@ Construction sites lose whole days when cement, steel or ready-mix concrete arri
 ## Key insights (on sample data)
 
 - **Two vendors cause half the late deliveries.** Vendors G and K handle 34% of orders but 52% of late ones, and win because they are about 5% cheaper. → Show reliability next to price.
-- **Dispatch alerts are accurate but late.** They give a median of about 2.5 hours' warning, and 20% of late orders leave on time and get stuck on the road. → Ship dispatch alerts first, then GPS tracking.
+- **Dispatch alerts are accurate but late.** They give a median of about 2.3 hours' warning (2.5 with the score-alone rule), and 20% of late orders leave on time and get stuck on the road. → Ship dispatch alerts first, then GPS tracking.
 - **Most false alarms come from trucks that already left on time.** Requiring a late truck for a loud alert cut false alarms from 188 to 73 (75% of alerts right instead of 56%) while still catching 77% of late orders. → The default rule; validate it first on real orders.
 
 ## What's real vs sample
@@ -66,7 +66,7 @@ npm test         # 26 tests, including the stats checks
 npm run build
 ```
 
-**AI assistant.** Copy `.env.example` to `.env.local` and add a free [Groq](https://console.groq.com) key as `GROQ_API_KEY`. On Vercel, add the same variable under *Project settings → Environment variables*. Without a key, the suggested questions still run on the data, without the written answer. The key stays on the server (`api/ai.js`) and is never sent to the browser.
+**AI assistant.** Copy `.env.example` to `.env.local` and add a free [Groq](https://console.groq.com) key as `GROQ_API_KEY`. On Vercel, add the same variable under *Project settings → Environment variables*. Without a key, the suggested questions still run on the data, without the written answer. The key stays on the server (`api/ai.js`) and is never sent to the browser. The endpoint only runs three fixed tasks (write the query, write the answer, draft a vendor message) with prompts built on the server, only answers pages on the same site, and allows 20 requests per visitor every 10 minutes. Setting a spending limit on the Groq key is a good extra safety net.
 
 **Install as an app.** The production build is a PWA: on Android, open the site in Chrome and choose *Install app*. It opens on the console and works offline.
 

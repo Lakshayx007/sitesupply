@@ -4,7 +4,7 @@ import type { SqlValue } from "sql.js";
 import { useDb } from "../../db/DbProvider";
 import { runQuery } from "../../db/useQuery";
 import { AiError } from "../../lib/ai";
-import { PRESETS, answerPrompt, guardSql, sqlPrompt, type Preset } from "../../lib/ask";
+import { PRESETS, guardSql, type Preset } from "../../lib/ask";
 import { useAi } from "../../lib/useAi";
 
 const MiniChart = lazy(() => import("../charts/MiniChart").then((m) => ({ default: m.MiniChart })));
@@ -174,7 +174,7 @@ export function AskPanel({ compact = false, autoRun }: { compact?: boolean; auto
         let chart = preset?.chart ?? "bar";
         if (!sql) {
           if (!ai) throw new AiError("Free-form questions need the AI service. Try one of the suggested questions.");
-          const plan = await ai.json<{ sql?: string; chart?: "bar" | "line" | "none"; reason?: string }>(sqlPrompt(question), { signal: c.signal });
+          const plan = await ai.json<{ sql?: string; chart?: "bar" | "line" | "none"; reason?: string }>("sql", { question }, { signal: c.signal });
           if (!plan?.sql) throw new AiError(plan?.reason ?? "That question can't be answered from the order data.");
           sql = plan.sql;
           chart = plan.chart ?? "bar";
@@ -187,7 +187,7 @@ export function AskPanel({ compact = false, autoRun }: { compact?: boolean; auto
         })();
         patch(id, { columns, rows, phase: ai && !opts.dataOnly ? "answering" : "done" });
         if (ai && !opts.dataOnly) {
-          const answer = await ai.text(answerPrompt(question, safe, columns, rows), {
+          const answer = await ai.text("answer", { question, sql: safe, columns, rows: rows.slice(0, 200) }, {
             signal: c.signal,
             onText: (t) => patch(id, { answer: t }),
           });
@@ -213,7 +213,7 @@ export function AskPanel({ compact = false, autoRun }: { compact?: boolean; auto
       ctl.current = c;
       patch(ex.id, { phase: "answering" });
       try {
-        const answer = await ai.text(answerPrompt(ex.question, ex.sql, ex.columns, ex.rows), {
+        const answer = await ai.text("answer", { question: ex.question, sql: ex.sql, columns: ex.columns, rows: ex.rows.slice(0, 200) }, {
           signal: c.signal,
           onText: (t) => patch(ex.id, { answer: t }),
         });
@@ -323,6 +323,7 @@ export function AskPanel({ compact = false, autoRun }: { compact?: boolean; auto
             id={compact ? "ask-compact" : "ask-main"}
             value={text}
             onChange={(e) => setText(e.target.value)}
+            maxLength={300}
             disabled={dbStatus !== "ready"}
             placeholder={offline ? "Pick a suggested question above" : "Ask about vendors, delays, materials, alerts…"}
             className="input h-12 pr-14 text-[15px]"

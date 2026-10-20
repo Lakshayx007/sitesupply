@@ -3,7 +3,7 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { handleAi } from "./api/_groq.js";
+import { handleAi, requestContext } from "./api/_groq.js";
 
 /** Serves /api/ai for `npm run dev` and `npm run preview`, the same way the Vercel function does in production. */
 function localAiApi(apiKey: string | undefined): Plugin {
@@ -17,8 +17,11 @@ function localAiApi(apiKey: string | undefined): Plugin {
       } catch {
         /* invalid JSON is reported by handleAi */
       }
-      const [status, json] = await handleAi(req.method, body, apiKey).catch(() => [500, { error: "Unexpected error" }] as [number, unknown]);
+      const [status, json, headers] = await handleAi(req.method, body, apiKey, requestContext(req.headers)).catch(
+        () => [500, { error: "Unexpected error" }] as [number, unknown],
+      );
       res.statusCode = status;
+      for (const [k, v] of Object.entries(headers ?? {})) res.setHeader(k, v);
       res.setHeader("Content-Type", "application/json");
       res.end(JSON.stringify(json));
     });
