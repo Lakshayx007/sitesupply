@@ -371,6 +371,25 @@ function Results() {
 
 /* ---------------- Page ---------------- */
 
+/** Renders its children only once they come near the screen, so the first paint stays light. */
+function Deferred({ children, minHeight }: { children: ReactNode; minHeight: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || show) return;
+    if (typeof IntersectionObserver === "undefined") return setShow(true);
+    const io = new IntersectionObserver((e) => e.some((x) => x.isIntersecting) && setShow(true), { rootMargin: "400px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [show]);
+  return (
+    <div ref={ref} style={show ? undefined : { minHeight }}>
+      {show ? children : null}
+    </div>
+  );
+}
+
 function SectionHead({ id, title, children }: { id: string; title: string; children?: ReactNode }) {
   return (
     <div className="max-w-3xl">
@@ -409,7 +428,7 @@ export default function Home() {
             { icon: Eye, text: "Vendor record, route length, rush orders and the monsoon all count." },
             { icon: LayoutList, text: "The live board puts delayed and at-risk orders at the top." },
           ]}
-          visual={<RulesVisual />}
+          visual={<Deferred minHeight={360}><RulesVisual /></Deferred>}
           link={{ to: "/console", label: "See the live board" }}
         />
         <Feature
@@ -421,7 +440,7 @@ export default function Home() {
             { icon: MessageSquareText, text: "AI drafts the message to the vendor's dispatch desk, ready to send." },
             { icon: Smartphone, text: "Made for the phone in a site engineer's pocket." },
           ]}
-          visual={<PhoneVisual />}
+          visual={<Deferred minHeight={520}><PhoneVisual /></Deferred>}
           link={{ to: "/console/alerts", label: "Open the alerts" }}
         />
         <Feature
@@ -431,7 +450,7 @@ export default function Home() {
             { icon: Eye, text: "On time and in full, adjusted so three lucky orders can't top the list." },
             { icon: Lock, text: "Every alert suggests the most reliable backup for that material." },
           ]}
-          visual={<VendorVisual />}
+          visual={<Deferred minHeight={360}><VendorVisual /></Deferred>}
           link={{ to: "/console/vendors", label: "Open the vendor scorecard" }}
         />
       </section>
@@ -460,7 +479,7 @@ export default function Home() {
       <section aria-labelledby="results-title" className="mx-auto max-w-page px-4 pt-32 sm:px-6">
         <SectionHead id="results-title" title="What it catches" />
         <div className="mt-12">
-          <Results />
+          <Deferred minHeight={160}><Results /></Deferred>
         </div>
       </section>
 
@@ -486,7 +505,7 @@ export default function Home() {
             </ul>
           </div>
           <div className="frame min-w-0 p-5 sm:p-6">
-            <AskPanel compact autoRun={0} />
+            <Deferred minHeight={420}><AskPanel compact autoRun={0} /></Deferred>
           </div>
         </div>
       </section>

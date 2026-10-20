@@ -43,22 +43,18 @@ export function ConsoleProvider({ children, initialNow = DEFAULT_NOW }: { childr
 
   useEffect(() => {
     if (!playing) return;
+    // Ten clock steps a second is smooth enough for a replay and keeps the main thread free.
     let last = performance.now();
-    let raf = 0;
-    const tick = (t: number) => {
-      const dt = (t - last) / 1000;
+    const id = window.setInterval(() => {
+      const t = performance.now();
+      const next = nowRef.current + ((t - last) / 1000) * speed;
       last = t;
-      const next = nowRef.current + dt * speed;
       if (next >= WINDOW.end) {
         setNowRaw(WINDOW.end);
         setPlaying(false);
-        return;
-      }
-      setNowRaw(next);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+      } else setNowRaw(next);
+    }, 100);
+    return () => window.clearInterval(id);
   }, [playing, speed]);
 
   const alertTimes = useMemo(

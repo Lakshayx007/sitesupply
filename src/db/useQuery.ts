@@ -38,6 +38,21 @@ export function runQuery<T = Row>(
  *
  *   const { rows, loading, error } = useQuery<{ otif: number }>("SELECT AVG(otif) AS otif FROM orders WHERE cancelled = 0");
  */
+/** Results are shared across components: the same query on the same database runs once per page load. */
+const cache = new WeakMap<Database, Map<string, { rows: unknown[]; columns: string[] }>>();
+
+function cachedQuery<T>(db: Database, sql: string, params?: Record<string, SqlValue> | SqlValue[]) {
+  let m = cache.get(db);
+  if (!m) cache.set(db, (m = new Map()));
+  const k = sql + "\u0000" + (params ? JSON.stringify(params) : "");
+  let hit = m.get(k);
+  if (!hit) {
+    hit = runQuery(db, sql, params);
+    m.set(k, hit);
+  }
+  return hit as { rows: T[]; columns: string[] };
+}
+
 export function useQuery<T = Row>(
   sql: string,
   params?: Record<string, SqlValue> | SqlValue[],
@@ -49,7 +64,7 @@ export function useQuery<T = Row>(
     if (status === "loading") return { rows: [], columns: [], loading: true, error: null };
     if (status === "error") return { rows: [], columns: [], loading: false, error };
     try {
-      const { rows, columns } = runQuery<T>(db, sql, params);
+      const { rows, columns } = cachedQuery<T>(db, sql, params);
       return { rows, columns, loading: false, error: null };
     } catch (e) {
       return { rows: [], columns: [], loading: false, error: e instanceof Error ? e : new Error(String(e)) };
