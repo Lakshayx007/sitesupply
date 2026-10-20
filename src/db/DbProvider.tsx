@@ -17,6 +17,10 @@ const DbContext = createContext<DbState>({ status: "loading", db: null, error: n
 const asset = (path: string) => new URL(path, document.baseURI).toString();
 
 let dbPromise: Promise<Database> | null = null;
+let dbBytes: Uint8Array | null = null;
+
+/** The raw database file and the SQL engine's URL, for the background query worker (src/db/safeQuery.ts). */
+export const dbSource = () => (dbBytes ? { bytes: dbBytes, wasmUrl: asset("sql-wasm.wasm") } : null);
 
 /** Loads the database once per page load; later calls reuse the same promise. */
 export function loadDatabase(): Promise<Database> {
@@ -29,7 +33,8 @@ export function loadDatabase(): Promise<Database> {
           return r.arrayBuffer();
         }),
       ]);
-      return new SQL.Database(new Uint8Array(buf));
+      dbBytes = new Uint8Array(buf);
+      return new SQL.Database(dbBytes);
     })();
     dbPromise.catch(() => {
       dbPromise = null; // allow a retry after a failure

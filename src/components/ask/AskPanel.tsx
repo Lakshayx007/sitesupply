@@ -2,7 +2,7 @@ import { ArrowUp, Check, ChevronDown, Code2, Copy, Sparkles, Square, Table2, Tri
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import type { SqlValue } from "sql.js";
 import { useDb } from "../../db/DbProvider";
-import { runQuery } from "../../db/useQuery";
+import { runSafeQuery } from "../../db/safeQuery";
 import { AiError } from "../../lib/ai";
 import { PRESETS, guardSql, type Preset } from "../../lib/ask";
 import { useAi } from "../../lib/useAi";
@@ -181,10 +181,7 @@ export function AskPanel({ compact = false, autoRun }: { compact?: boolean; auto
         }
         const safe = guardSql(sql);
         patch(id, { phase: "running", sql: safe, chart });
-        const { columns, rows } = (() => {
-          const r = runQuery<Record<string, SqlValue>>(db, `SELECT * FROM (${safe}) LIMIT 200`);
-          return { columns: r.columns, rows: r.rows.map((o) => r.columns.map((k) => o[k])) };
-        })();
+        const { columns, rows } = await runSafeQuery(db, `SELECT * FROM (${safe}) LIMIT 200`);
         patch(id, { columns, rows, phase: ai && !opts.dataOnly ? "answering" : "done" });
         if (ai && !opts.dataOnly) {
           const answer = await ai.text("answer", { question, sql: safe, columns, rows: rows.slice(0, 200) }, {

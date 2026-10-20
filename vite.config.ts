@@ -39,6 +39,8 @@ export default defineConfig(({ mode }) => {
   if (env.GROQ_MODEL) process.env.GROQ_MODEL = env.GROQ_MODEL;
   return {
     base: "./",
+    // Module workers, so the Ask query worker (src/db/askWorker.ts) can import sql.js.
+    worker: { format: "es" },
     plugins: [
       react(),
       localAiApi(env.GROQ_API_KEY),
