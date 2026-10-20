@@ -82,7 +82,7 @@ python scripts/make_sample_data.py && python scripts/analysis.py && python scrip
 
 ## Tech
 
-Vite, React 18, TypeScript, Tailwind CSS, React Router (hash), sql.js (SQLite in the browser), Apache ECharts, Framer Motion, react-markdown, Vitest, vite-plugin-pwa. Design language adapted from the Linear DESIGN.md in [VoltAgent/awesome-claude-design](https://github.com/VoltAgent/awesome-claude-design) (MIT). AI via Groq (Llama 3.3 70B).
+Vite, React 18, TypeScript, Tailwind CSS, React Router (hash), sql.js (SQLite in the browser), Apache ECharts, Framer Motion, react-markdown, Vitest, vite-plugin-pwa. Design language adapted from the Linear DESIGN.md in [VoltAgent/awesome-claude-design](https://github.com/VoltAgent/awesome-claude-design) (MIT). AI via Groq (GPT-OSS 120B, falling back to GPT-OSS 20B).
 
 ## Author
 

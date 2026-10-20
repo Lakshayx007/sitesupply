@@ -30,13 +30,16 @@ async function groq(): Promise<AiProvider | null> {
         body: JSON.stringify({ messages, json }),
         signal,
       });
-      const body = (await res.json().catch(() => ({}))) as { text?: string; error?: string };
-      if (!res.ok) throw new AiError(body.error ?? "The AI service is unavailable.");
+      const body = (await res.json().catch(() => ({}))) as { text?: string; error?: string; detail?: string };
+      if (!res.ok) {
+        if (body.detail) console.warn("[SiteSupply AI]", body.detail);
+        throw new AiError(body.error ?? "The AI service is unavailable.");
+      }
       return body.text ?? "";
     };
     return {
       kind: "groq",
-      label: `Groq · ${info.model ?? "Llama"}`,
+      label: `Groq · ${(info.model ?? "gpt-oss").replace(/^openai\//, "")}`,
       async text(input, opts) {
         const messages = typeof input === "string" ? [{ role: "user" as const, content: input }] : input;
         const t = await call(messages, false, opts?.signal);

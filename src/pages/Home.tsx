@@ -495,7 +495,7 @@ export default function Home() {
               {[
                 { icon: Code2, text: "Every answer shows the exact query and the rows it read." },
                 { icon: Lock, text: "Queries run in your browser and can only read data, never change it." },
-                { icon: Sparkles, text: "Written answers by Llama 3.3 on Groq." },
+                { icon: Sparkles, text: "Written answers by GPT-OSS 120B on Groq." },
               ].map(({ icon: Icon, text }) => (
                 <li key={text} className="flex gap-3 text-[15px] text-ink-2">
                   <Icon aria-hidden="true" className="mt-0.5 h-[18px] w-[18px] shrink-0 text-primary-ink" />
